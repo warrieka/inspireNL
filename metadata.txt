@@ -1,0 +1,39 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=INSPIRE Nederland plugin voor QGIS
+qgisMinimumVersion=2.8
+description=Dataset van de het Nederlandse Dataportaal Nationaal Georegister bevragen en toevoegen aan QGIS.
+version=0.1
+author=KGIS
+email=kaywarrie@gmail.com
+
+about=De INSPIRE-implementatie in Nederland komt nu in een fase waarin het niet langer alleen maar gaat om het aanbod en om het tijdig voldoen aan de Europese wettelijke verplichtingen. Nu een toenemend aantal INSPIRE datasets en services ook daadwerkelijk beschikbaar begint te komen, wordt aandacht voor het gebruik en de toepassing ervan geleidelijk aan steeds actueler en belangrijker. Daarnaast is van belang dat de INSPIRE-implementatie niet op zichzelf staat, maar plaatsvindt in een context waarin ook allerlei andere zaken en ontwikkelingen spelen, waar samenhang mee aanwezig is, afstemming mee dient plaats te vinden en waar actieve aandacht voor het opsporen en waar mogelijk benutten van synergie aan de orde is. Inmiddels zijn meer dan 350 datasets en bijbehorende services geregistreerd in het nationaal georegister geregistreerd als INSPIRE dataset of service. Om het gebruik te vergemakkelijken voor de (semi-)professionele GIS-gebruikers in Nederland worden voor twee meest gebruikte GIS software pakketten – te weten QGIS en ArcGIS Desktop – plugins ontwikkeld. Deze plugins maken het makkelijk om direct via het Nationaal Georegister (http://www.nationaalgeoregister.nl/) de INSPIRE datasets en services te vinden, te raadplegen en te downloaden.
+
+tracker=https://github.com/warrieka/inspireNL/issues
+repository=https://github.com/warrieka/inspireNL
+# End of mandatory metadata
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+# changelog=
+
+# Tags are comma separated with spaces allowed
+tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister
+
+homepage=https://github.com/warrieka/inspireNL
+category=Plugins
+icon=icon.png
+# experimental flag
+experimental=True
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+

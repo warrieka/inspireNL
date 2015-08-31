@@ -1,5 +1,6 @@
 <RCC>
-    <qresource prefix="/plugins/inspireNL" >
-        <file>icon.png</file>
-    </qresource>
+  <qresource prefix="/plugins/inspireNL">
+    <file>images/wrench.png</file>
+    <file>images/icon.png</file>
+  </qresource>
 </RCC>

@@ -1,24 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-/***************************************************************************
-geopunt4QgisDataCatalog
-                A QGIS plugin
-"Tool om geopunt in QGIS te gebruiken"
-                -------------------
-    begin                : 2014-07-15
-    copyright            : (C) 2014 by Kay Warrie
-    email                : kaywarrie@gmail.com
-***************************************************************************/
-
-/***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************/
-"""
 from PyQt4 import QtCore, QtGui
 from ui_dataCatalog_dialog import Ui_dataCatalogDlg
 from qgis.core import *
@@ -129,7 +109,6 @@ class dataCatalog(QtGui.QDialog):
         if self.firstShow:
              inet = internet_on( )
              if inet:
-                self.ui.GDIThemaCbx.addItems( ['']+ self.md.list_GDI_theme() )
                 self.ui.organisatiesCbx.addItems( ['']+ self.md.list_organisations() )
                 keywords = sorted( self.md.list_suggestionKeyword() ) 
                 self.completerModel.setStringList( keywords )
@@ -199,7 +178,6 @@ class dataCatalog(QtGui.QDialog):
     def search(self): 
         try:      
           if self.ui.filterBox.isChecked():
-            themekey= self.ui.GDIThemaCbx.currentText()
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
             if dataTypes != []: dataType= dataTypes[0]
@@ -211,7 +189,7 @@ class dataCatalog(QtGui.QDialog):
             inspireannex= self.ui.INSPIREannexCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
             searchResult = metadata.MDdata( self.md.searchAll(
-              self.zoek, themekey, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType))
+              self.zoek, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType))
           else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
         except:

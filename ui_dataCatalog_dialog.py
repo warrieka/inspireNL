@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Wed Sep 02 16:55:44 2015
+# Created: Thu Sep 03 14:14:24 2015
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_dataCatalogDlg(object):
     def setupUi(self, dataCatalogDlg):
         dataCatalogDlg.setObjectName(_fromUtf8("dataCatalogDlg"))
-        dataCatalogDlg.resize(571, 534)
+        dataCatalogDlg.resize(827, 648)
         dataCatalogDlg.setMinimumSize(QtCore.QSize(360, 400))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -277,22 +277,10 @@ class Ui_dataCatalogDlg(object):
         self.horizontalLayout_2.addWidget(self.DLbtn)
         spacerItem = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem)
+        self.closeBtn = QtGui.QPushButton(dataCatalogDlg)
+        self.closeBtn.setObjectName(_fromUtf8("closeBtn"))
+        self.horizontalLayout_2.addWidget(self.closeBtn)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
-        self.horizontalLayout_4 = QtGui.QHBoxLayout()
-        self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
-        spacerItem1 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem1)
-        self.buttonBox = QtGui.QDialogButtonBox(dataCatalogDlg)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.buttonBox.sizePolicy().hasHeightForWidth())
-        self.buttonBox.setSizePolicy(sizePolicy)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Help)
-        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.horizontalLayout_4.addWidget(self.buttonBox)
-        self.verticalLayout.addLayout(self.horizontalLayout_4)
         self.msgLbl = QtGui.QLabel(dataCatalogDlg)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -312,9 +300,8 @@ class Ui_dataCatalogDlg(object):
         self.addWFSaction.setObjectName(_fromUtf8("addWFSaction"))
 
         self.retranslateUi(dataCatalogDlg)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), dataCatalogDlg.accept)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), dataCatalogDlg.reject)
         QtCore.QObject.connect(self.filterBox, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.filterWgt.setVisible)
+        QtCore.QObject.connect(self.closeBtn, QtCore.SIGNAL(_fromUtf8("clicked()")), dataCatalogDlg.reject)
         QtCore.QMetaObject.connectSlotsByName(dataCatalogDlg)
 
     def retranslateUi(self, dataCatalogDlg):
@@ -335,6 +322,7 @@ class Ui_dataCatalogDlg(object):
         self.addWMSbtn.setText(_translate("dataCatalogDlg", "WMS toevoegen", None))
         self.addWFSbtn.setText(_translate("dataCatalogDlg", "WFS toevoegen", None))
         self.DLbtn.setText(_translate("dataCatalogDlg", "Downloaden", None))
+        self.closeBtn.setText(_translate("dataCatalogDlg", "Sluiten", None))
         self.msgLbl.setText(_translate("dataCatalogDlg", "<html><head/><body><p><a href=\"http://www.nationaalgeoregister.nl/\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.nationaalgeoregister.nl/</span></a></p></body></html>", None))
         self.addWMSaction.setText(_translate("dataCatalogDlg", "WMS toevoegen", None))
         self.Download_action.setText(_translate("dataCatalogDlg", "Downloadpagina openen", None))

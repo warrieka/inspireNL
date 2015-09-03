@@ -5,6 +5,7 @@ from qgis.core import *
 from qgis.gui import QgsMessageBar 
 import os, json, webbrowser, sys, urllib2
 import geometryhelper as gh
+from settings import settings
 import metadataParser as metadata
 
 class dataCatalog(QtGui.QDialog):
@@ -32,8 +33,7 @@ class dataCatalog(QtGui.QDialog):
         self.ui.setupUi(self)
         
         #get settings
-        self.s = QtCore.QSettings()
-        #self.loadSettings()
+        self.s = settings()
 
         self.gh = gh.geometryHelper( self.iface )
         
@@ -42,10 +42,6 @@ class dataCatalog(QtGui.QDialog):
         self.bar.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed )
         self.ui.verticalLayout.addWidget(self.bar)
         
-        self.ui.buttonBox.addButton( QtGui.QPushButton("Sluiten"), QtGui.QDialogButtonBox.RejectRole )
-        for btn in self.ui.buttonBox.buttons():
-            btn.setAutoDefault(0)
-            
         #vars
         self.firstShow = True
         self.wms = None
@@ -53,18 +49,18 @@ class dataCatalog(QtGui.QDialog):
         self.dl = None
         self.zoek = ''
         self.bronnen = None 
-        
-        self.model = QtGui.QStandardItemModel( self )
+        #datamodel
+        self.model = QtGui.QStandardItemModel(self)
         self.proxyModel = QtGui.QSortFilterProxyModel(self)
         self.proxyModel.setSourceModel(self.model)
         self.ui.resultView.setModel( self.proxyModel )
-        
+        #completer
         self.completer = QtGui.QCompleter( self )
-        self.completerModel = QtGui.QStringListModel( self)
-        self.ui.zoekTxt.setCompleter( self.completer )
-        self.completer.setModel( self.completerModel )
+        self.completerModel = QtGui.QStringListModel(self)
+        self.ui.zoekTxt.setCompleter(self.completer )
+        self.completer.setModel(self.completerModel )
         
-        self.md = metadata.MDReader(  )
+        self.md = metadata.MDReader(timeout=self.s.timeout, proxyUrl=self.s.proxyUrl)
   
         #eventhandlers 
         self.ui.zoekBtn.clicked.connect(self.onZoekClicked)
@@ -74,21 +70,7 @@ class dataCatalog(QtGui.QDialog):
         self.ui.resultView.clicked.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
         self.ui.filterWgt.setHidden(1)
-        self.ui.buttonBox.helpRequested.connect(self.openHelp)
         self.finished.connect(self.clean)
-
-    #def loadSettings(self):
-        #self.timeout =  int( self.s.value("geopunt4qgis/timeout" ,15))
-        #if int( self.s.value("geopunt4qgis/useProxy" , 0)):
-            #self.proxy = self.s.value("geopunt4qgis/proxyHost" ,"")
-            #self.port = self.s.value("geopunt4qgis/proxyPort" ,"")
-        #else:
-            #self.proxy = ""
-            #self.port = ""
-        #self.md = metadata.MDReader( self.timeout, self.proxy, self.port )
-            
-    def openHelp(self):
-        webbrowser.open_new_tab("http://www.geopunt.be/voor-experts/geopunt-plug-ins/functionaliteiten/catalogus")
 
     def _setModel(self, records):   
         self.model.clear()
@@ -107,7 +89,7 @@ class dataCatalog(QtGui.QDialog):
         QtGui.QDialog.show(self)
         self.setWindowModality(0)
         if self.firstShow:
-             inet = internet_on( )
+             inet = internet_on( self.s.proxyUrl )
              if inet:
                 self.ui.organisatiesCbx.addItems( ['']+ self.md.list_organisations() )
                 keywords = sorted( self.md.list_suggestionKeyword() ) 
@@ -215,7 +197,7 @@ class dataCatalog(QtGui.QDialog):
         if crs != 'EPSG:28992' or  crs != 'EPSG:3857' or  crs != 'EPSG:3043':
            crs = 'EPSG:28992' 
         try:   
-          lyrs =  metadata.getWmsLayerNames( self.wms ) 
+          lyrs =  metadata.getWmsLayerNames( self.wms, self.s.proxyUrl ) 
         except:
           self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
           return 
@@ -254,7 +236,7 @@ class dataCatalog(QtGui.QDialog):
     def addWFS(self):    
         if self.wfs == None: return
         try:
-            lyrs =  metadata.getWFSLayerNames( self.wfs )
+            lyrs =  metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
         except:
             self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
             return 
@@ -296,9 +278,15 @@ class dataCatalog(QtGui.QDialog):
         self.ui.addWMSbtn.setEnabled(0)
         self.ui.modelFilterCbx.setCurrentIndex(0)
         
-def internet_on():
+def internet_on(proxyUrl=None):
     try:
-        response=urllib2.urlopen('https://www.google.be/',timeout=1)
+        if proxyUrl:
+          proxy = urllib2.ProxyHandler({'http': proxyUrl})
+          auth = urllib2.HTTPBasicAuthHandler()
+          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+          responseWFS = opener.open("https://www.google.be/", timeout=5)
+        else: 
+          responseWFS =  urllib2.urlopen("https://www.google.be/", timeout=5)
         return True
     except urllib2.URLError as err: pass
     return False

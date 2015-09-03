@@ -29,7 +29,7 @@ SOURCES = \
 PLUGINNAME = inspireNL
 
 PY_FILES = \
-	__init__.py \
+	__init__.py settings.py \
 	inspireNL.py inspireNLabout.py dataCatalog.py geometryhelper.py metadataParser.py
 
 UI_FILES = ui_inspireNL_dialog.py ui_dataCatalog_dialog.py

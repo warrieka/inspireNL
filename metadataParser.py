@@ -30,7 +30,10 @@ class MDdata:
               record['abstract'] = ''
            
            if (md.find('geoBox') != None) and (md.find('geoBox').text != None): 
-              record['geoBox'] = md.find('geoBox').text  #[float(i) for i in md.find('geoBox').text.split('|') ]
+               try:
+                   record['geoBox'] = [float(i) for i in md.find('geoBox').text.split('|') ]
+               except:
+                   record['geoBox'] = ""
            else: 
               record['geoBox'] = ""
            
@@ -69,27 +72,28 @@ class MDdata:
 
 
 class MDReader:
-    def __init__(self, timeout=15 ):
+    def __init__(self, proxyUrl=None, timeout=15 ):
         self.timeout = timeout
-        self.geoNetworkUrl = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/" #"https://metadata.geopunt.be/zoekdienst/srv/dut"
+        self.geoNetworkUrl = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/" 
 
         self.dataTypes = [["Dataset", "dataset"],["Datasetserie","series"],
                           ["Objectencatalogus","model"],["Service","service"]]
         self.inspireServiceTypes =  ["Discovery","Transformation","View","Other","Invoke"]
         self.inspireannex =  ["i","ii","iii"]
-
+        
+        self.opener = None
+        if proxyUrl:
+             proxy = urllib2.ProxyHandler({'http': proxyUrl})
+             auth = urllib2.HTTPBasicAuthHandler()
+             self.opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+        
     def _createFindUrl(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
         geopuntUrl = self.geoNetworkUrl + "/q?fast=index&sortBy=changeDate&"
         data = {}
         data["any"] = "*" + unicode(q).encode('utf-8') + "*"
         data["to"] = to
         data["from"] = start
-        
-        if orgName  and not " or " in orgName.lower():
-            if " " in orgName:
-                data["orgName"] = '"' +  orgName + '"' 
-            else: 
-                data["orgName"] = orgName
+        data["orgName"] = orgName
                 
         if dataType: data['type']= dataType
         if siteId: data['siteId']= siteId                
@@ -106,12 +110,14 @@ class MDReader:
 
         values = urllib.urlencode(data)
         result = geopuntUrl + values
+        print result
         return result
           
     def list_inspire_theme(self, q=''):
         url = self.geoNetworkUrl + "/xml.search.keywords?pNewSearch=true&pTypeSearch=1&pThesauri=external.theme.inspire-theme&pKeyword=*" + unicode(q).encode('utf-8') +"*"
         try:
-            response= urllib2.urlopen(url, timeout=self.timeout)
+            if self.opener: response = self.opener.open(url, timeout=self.timeout)
+            else: response = urllib2.urlopen(url, timeout=self.timeout)
         except  (urllib2.HTTPError, urllib2.URLError) as e:
             raise metaError( str( e.reason ))
         except:
@@ -129,7 +135,8 @@ class MDReader:
             url= url + "&q=" + unicode(q).encode('utf-8') 
         
         try:
-            response= urllib2.urlopen(url, timeout=self.timeout)
+            if self.opener: response = self.opener.open(url, timeout=self.timeout)
+            else: response = urllib2.urlopen(url, timeout=self.timeout)
         except  (urllib2.HTTPError, urllib2.URLError) as e:
             raise metaError( str( e.reason ))
         except:
@@ -143,7 +150,8 @@ class MDReader:
         if q:
             url= url + "&q=" + unicode(q).encode('utf-8') 
         try:
-            response = urllib2.urlopen(url, timeout=self.timeout)
+            if self.opener: response = self.opener.open(url, timeout=self.timeout)
+            else: response = urllib2.urlopen(url, timeout=self.timeout)
         except  (urllib2.HTTPError, urllib2.URLError) as e:
             raise metaError( str( e.reason ))
         except:
@@ -157,11 +165,11 @@ class MDReader:
             else:
                return []
                
-
     def list_bronnen(self):
         url = self.geoNetworkUrl + "/xml.info?type=sources"
         try:
-            response = urllib2.urlopen(url, timeout=self.timeout)
+            if self.opener: response = self.opener.open(url, timeout=self.timeout)
+            else: response = urllib2.urlopen(url, timeout=self.timeout)
         except  (urllib2.HTTPError, urllib2.URLError) as e:
             raise metaError( str( e.reason ))
         except:
@@ -177,7 +185,8 @@ class MDReader:
     def search(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='' ):
         url = self._createFindUrl( q, start, to,  orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
         try:
-            response = urllib2.urlopen(url, timeout=self.timeout)
+            if self.opener: response = self.opener.open(url, timeout=self.timeout)
+            else: response = urllib2.urlopen(url, timeout=self.timeout)
         except  (urllib2.HTTPError, urllib2.URLError) as e:
             raise metaError( str( e.reason ) +' on '+ url )
         except:
@@ -208,13 +217,19 @@ class metaError(Exception):
         return repr(self.message)
 
       
-def getWmsLayerNames( url ):
+def getWmsLayerNames( url, proxyUrl=None ):
       if (not "request=GetCapabilities" in url.lower()) or (not "service=wms" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
       else: 
           capability = url
-      
-      responseWMS =  urllib2.urlopen(capability)
+
+      if proxyUrl:
+           proxy = urllib2.ProxyHandler({'http': proxyUrl})
+           auth = urllib2.HTTPBasicAuthHandler()
+           opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+           responseWMS = opener.open(capability, timeout=15)
+      else: 
+           responseWMS =  urllib2.urlopen(capability, timeout=15)
       
       result = ET.parse(responseWMS)
       layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
@@ -230,22 +245,28 @@ def getWmsLayerNames( url ):
 
       return layerNames
 
-def getWFSLayerNames( url ):
+def getWFSLayerNames( url, proxyUrl=None ):
       if (not "request=GetCapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
       else: 
           capability = url
-      
-      responseWFS =  urllib2.urlopen(capability)
+          
+      if proxyUrl:
+          proxy = urllib2.ProxyHandler({'http': proxyUrl})
+          auth = urllib2.HTTPBasicAuthHandler()
+          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+          responseWFS = opener.open(capability, timeout=15)
+      else: 
+          responseWFS =  urllib2.urlopen(capability, timeout=15)
       
       result = ET.parse(responseWFS)
-      layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
+      layers = result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
       layerNames=[]
 
       for lyr in layers:
-          name= lyr.find("{http://www.opengis.net/wfs}Name")
+          name  = lyr.find("{http://www.opengis.net/wfs}Name")
           title = lyr.find("{http://www.opengis.net/wfs}Title")
-          srs = lyr.find("{http://www.opengis.net/wfs}SRS")
+          srs   = lyr.find("{http://www.opengis.net/wfs}SRS")
           if ( name != None) and ( title != None ):
               if srs == None: layerNames.append(( name.text, title.text, 'EPSG:31370'))
               else: layerNames.append(( name.text, title.text, srs.text))

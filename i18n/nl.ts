@@ -21,10 +21,5 @@
         <source>INSPIRE Nederland plugin voor QGIS</source>
         <translation>INSPIRE Nederland plugin voor QGIS</translation>
     </message>
-    <message>
-        <location filename="ui_inspireNL_dialog.py" line="53"/>
-        <source>PushButton</source>
-        <translation></translation>
-    </message>
 </context>
 </TS>

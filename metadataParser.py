@@ -39,6 +39,8 @@ class MDdata:
            
            record['wms'] = self._findWMS( md )
            record['wfs'] = self._findWFS( md )
+           record['wcs'] = self._findWCS( md )
+           record['wmts'] = self._findWMTS( md )
            record['download'] = self._findDownload( md )
            
            self.records.append(record)
@@ -57,6 +59,24 @@ class MDdata:
         links = links.split('|') 
         for n in range(1, len( links )):
             if "OGC:WMS" in links[n].upper(): 
+              if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
+                  return links[n - 1]
+        return ""
+      
+    def _findWMTS(self , node ):
+        links =  "|".join( [ n.text for n in node.findall("link") ] )
+        links = links.split('|') 
+        for n in range(1, len( links )):
+            if "OGC:WMTS" in links[n].upper(): 
+              if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
+                  return links[n - 1]
+        return ""
+
+    def _findWCS(self , node ):
+        links =  "|".join( [ n.text for n in node.findall("link") ] )
+        links = links.split('|') 
+        for n in range(1, len( links )):
+            if "OGC:WCS" in links[n].upper(): 
               if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
                   return links[n - 1]
         return ""
@@ -199,10 +219,10 @@ class MDReader:
     def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
         start= 1
         step= 100        
-        searchResult = self.search(q, start, step,  orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
+        searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
         count = int( searchResult[0].attrib["count"] )
         start += step
-        while (start) <= count:  #https://metadata.geopunt.be/zoekdienst/srv/dut/q?fast=index&sortBy=changeDate&to=&from=Herbruikbaar&any=%2A%2A'
+        while (start) <= count:  
            result = self.search(q, start, (start + step -1), orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
            mds= result.findall("metadata")
            for md in mds: searchResult.append( md )
@@ -215,21 +235,20 @@ class metaError(Exception):
         self.message = message
     def __str__(self):
         return repr(self.message)
-
-      
-def getWmsLayerNames( url, proxyUrl=None ):
+   
+def getWmsLayerNames( url, proxyUrl='', port=''):
       if (not "request=GetCapabilities" in url.lower()) or (not "service=wms" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
       else: 
           capability = url
-
-      if proxyUrl:
-           proxy = urllib2.ProxyHandler({'http': proxyUrl})
-           auth = urllib2.HTTPBasicAuthHandler()
-           opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-           responseWMS = opener.open(capability, timeout=15)
-      else: 
-           responseWMS =  urllib2.urlopen(capability, timeout=15)
+          
+      if (isinstance(proxyUrl, unicode) or isinstance(proxyUrl, str)) & proxyUrl.startswith("http://"):
+          netLoc = proxyUrl.strip() + ":" + port
+          proxy = urllib2.ProxyHandler({'http': netLoc ,'https': netLoc })
+          opener = urllib2.build_opener(proxy)
+          responseWMS =  opener.open(capability)
+      else:
+          responseWMS =  urllib2.urlopen(capability)
       
       result = ET.parse(responseWMS)
       layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
@@ -245,35 +264,34 @@ def getWmsLayerNames( url, proxyUrl=None ):
 
       return layerNames
 
-def getWFSLayerNames( url, proxyUrl=None ):
+def getWFSLayerNames( url, proxyUrl='', port=''):
       if (not "request=GetCapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
       else: 
           capability = url
-          
-      if proxyUrl:
-          proxy = urllib2.ProxyHandler({'http': proxyUrl})
-          auth = urllib2.HTTPBasicAuthHandler()
-          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-          responseWFS = opener.open(capability, timeout=15)
-      else: 
-          responseWFS =  urllib2.urlopen(capability, timeout=15)
+      if (isinstance(proxyUrl, unicode) or isinstance(proxyUrl, str)) & proxyUrl.startswith("http://"):
+          netLoc = proxyUrl.strip() + ":" + port
+          proxy = urllib2.ProxyHandler({'http': netLoc ,'https': netLoc })
+          opener = urllib2.build_opener(proxy)
+          responseWFS =  opener.open(capability)
+      else:
+          responseWFS =  urllib2.urlopen(capability)
       
       result = ET.parse(responseWFS)
-      layers = result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
+      layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
       layerNames=[]
 
       for lyr in layers:
-          name  = lyr.find("{http://www.opengis.net/wfs}Name")
+          name= lyr.find("{http://www.opengis.net/wfs}Name")
           title = lyr.find("{http://www.opengis.net/wfs}Title")
-          srs   = lyr.find("{http://www.opengis.net/wfs}SRS")
+          srs = lyr.find("{http://www.opengis.net/wfs}SRS")
           if ( name != None) and ( title != None ):
               if srs == None: layerNames.append(( name.text, title.text, 'EPSG:31370'))
               else: layerNames.append(( name.text, title.text, srs.text))
 
       return layerNames
 
-def makeWFSuri( url, name='', srsname="EPSG:3857", version='1.0.0' ):
+def makeWFSuri( url, name='', srsname="EPSG:31370", version='1.0.0' ):
     params = {  'SERVICE': 'WFS',
                 'VERSION': version ,
                 'REQUEST': 'GetFeature',

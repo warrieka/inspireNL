@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>827</width>
-    <height>648</height>
+    <width>671</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -420,6 +420,16 @@
               <string>Download</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>WCS</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>WMTS</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -454,11 +464,11 @@
         </size>
        </property>
        <property name="text">
-        <string>WMS toevoegen</string>
+        <string>WMS </string>
        </property>
        <property name="icon">
-        <iconset>
-         <normaloff>:/plugins/geopunt4Qgis/images/Wms.png</normaloff>:/plugins/geopunt4Qgis/images/Wms.png</iconset>
+        <iconset resource="resources.qrc">
+         <normaloff>:/plugins/inspireNL/images/WmsLayer.png</normaloff>:/plugins/inspireNL/images/WmsLayer.png</iconset>
        </property>
        <property name="autoDefault">
         <bool>false</bool>
@@ -471,14 +481,42 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>WFS toevoegen</string>
+        <string>WFS </string>
        </property>
        <property name="icon">
-        <iconset>
-         <normaloff>:/plugins/geopunt4Qgis/images/Wfs.png</normaloff>:/plugins/geopunt4Qgis/images/Wfs.png</iconset>
+        <iconset resource="resources.qrc">
+         <normaloff>:/plugins/inspireNL/images/WfsLayer.png</normaloff>:/plugins/inspireNL/images/WfsLayer.png</iconset>
        </property>
        <property name="autoDefault">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addWCSbtn">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>WCS</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/plugins/inspireNL/images/WcsLayer.png</normaloff>:/plugins/inspireNL/images/WcsLayer.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addWMTSbtn">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>WMTS</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/plugins/inspireNL/images/tiles.png</normaloff>:/plugins/inspireNL/images/tiles.png</iconset>
        </property>
       </widget>
      </item>
@@ -491,8 +529,8 @@
         <string>Downloaden</string>
        </property>
        <property name="icon">
-        <iconset>
-         <normaloff>:/plugins/geopunt4Qgis/images/zip.png</normaloff>:/plugins/geopunt4Qgis/images/zip.png</iconset>
+        <iconset resource="resources.qrc">
+         <normaloff>:/plugins/inspireNL/images/zip.png</normaloff>:/plugins/inspireNL/images/zip.png</iconset>
        </property>
        <property name="autoDefault">
         <bool>false</bool>

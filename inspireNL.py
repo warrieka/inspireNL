@@ -38,7 +38,8 @@ class inspireNL:
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(self.plugin_dir, 'i18n', '{}.qm'.format(locale))
+        locale_path = os.path.join(self.plugin_dir, 'i18n', 
+'{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -63,9 +64,7 @@ class inspireNL:
         "Get the translation for a string using Qt translation API."
         return QCoreApplication.translate('inspireNL', message)
 
-    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, 
-                   add_to_toolbar=True, status_tip=None, parent=None):
-
+    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True,  add_to_toolbar=True, status_tip=None, parent=None):
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)

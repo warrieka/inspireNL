@@ -46,6 +46,8 @@ class dataCatalog(QtGui.QDialog):
         self.firstShow = True
         self.wms = None
         self.wfs = None
+        self.wmts = None
+        self.wcs = None
         self.dl = None
         self.zoek = ''
         self.bronnen = None 
@@ -66,6 +68,8 @@ class dataCatalog(QtGui.QDialog):
         self.ui.zoekBtn.clicked.connect(self.onZoekClicked)
         self.ui.addWMSbtn.clicked.connect(self.addWMS)
         self.ui.addWFSbtn.clicked.connect(self.addWFS)
+        self.ui.addWMTSbtn.clicked.connect(self.addWMTS)
+        self.ui.addWCSbtn.clicked.connect(self.addWCS)
         self.ui.DLbtn.clicked.connect(lambda: self.openUrl(self.dl))
         self.ui.resultView.clicked.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
@@ -80,9 +84,11 @@ class dataCatalog(QtGui.QDialog):
             wms = QtGui.QStandardItem( rec['wms'] )             #1
             downloadLink = QtGui.QStandardItem(rec['download']) #2
             id = QtGui.QStandardItem( rec['uuid'] )             #3
-            abstract  = QtGui.QStandardItem( rec['abstract'] )  #4
+            abstract = QtGui.QStandardItem( rec['abstract'] )   #4
             wfs =     QtGui.QStandardItem( rec['wfs'] )         #5
-            self.model.appendRow([title,wms,downloadLink,id,abstract,wfs])
+            wcs =     QtGui.QStandardItem( rec['wcs'] )         #6
+            wmts =    QtGui.QStandardItem( rec['wmts'] )        #7
+            self.model.appendRow([title,wms,downloadLink,id,abstract,wfs,wcs,wmts])
 
     #overwrite
     def show(self):
@@ -117,6 +123,8 @@ class dataCatalog(QtGui.QDialog):
            self.wms = self.proxyModel.data( self.proxyModel.index( row, 1) )
            self.dl  = self.proxyModel.data( self.proxyModel.index( row, 2) )
            self.wfs = self.proxyModel.data( self.proxyModel.index( row, 5) )
+           self.wcs = self.proxyModel.data( self.proxyModel.index( row, 6) )
+           self.wmts= self.proxyModel.data( self.proxyModel.index( row, 7) )
            uuid     = self.proxyModel.data( self.proxyModel.index( row, 3) )
            abstract = self.proxyModel.data( self.proxyModel.index( row, 4) )
            
@@ -130,6 +138,12 @@ class dataCatalog(QtGui.QDialog):
            
            if self.wfs: self.ui.addWFSbtn.setEnabled(1)
            else: self.ui.addWFSbtn.setEnabled(0)
+                      
+           if self.wmts: self.ui.addWMTSbtn.setEnabled(1)
+           else: self.ui.addWMTSbtn.setEnabled(0)
+           
+           if self.wcs: self.ui.addWCSbtn.setEnabled(1)
+           else: self.ui.addWCSbtn.setEnabled(0)
            
            if self.dl: self.ui.DLbtn.setEnabled(1)
            else: self.ui.DLbtn.setEnabled(0)
@@ -146,6 +160,10 @@ class dataCatalog(QtGui.QDialog):
            self.filterModel(5)
         elif value == 3:
            self.filterModel(2)
+        elif value == 4:
+           self.filterModel(6)
+        elif value == 5:
+           self.filterModel(7)
         else:
           self.filterModel()
           
@@ -263,12 +281,20 @@ class dataCatalog(QtGui.QDialog):
         except: 
             self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
             return 
-          
+
+    def addWMTS(self):
+      print self.wmts
+    
+    def addWCS(self):
+      print self.wcs
+            
     def clean(self):
         self.model.clear()
         self.wms = None
         self.wfs = None
         self.dl = None
+        self.wmts = None
+        self.wcs = None
         self.ui.zoekTxt.setCurrentIndex(0)
         self.ui.descriptionText.setText('')
         self.ui.countLbl.setText( "")

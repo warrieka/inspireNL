@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Thu Sep 03 14:14:24 2015
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Sat Sep  5 20:38:36 2015
+#      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_dataCatalogDlg(object):
     def setupUi(self, dataCatalogDlg):
         dataCatalogDlg.setObjectName(_fromUtf8("dataCatalogDlg"))
-        dataCatalogDlg.resize(827, 648)
+        dataCatalogDlg.resize(671, 539)
         dataCatalogDlg.setMinimumSize(QtCore.QSize(360, 400))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -240,6 +240,8 @@ class Ui_dataCatalogDlg(object):
         self.modelFilterCbx.addItem(_fromUtf8(""))
         self.modelFilterCbx.addItem(_fromUtf8(""))
         self.modelFilterCbx.addItem(_fromUtf8(""))
+        self.modelFilterCbx.addItem(_fromUtf8(""))
+        self.modelFilterCbx.addItem(_fromUtf8(""))
         self.horizontalLayout_6.addWidget(self.modelFilterCbx)
         self.verticalLayout_2.addWidget(self.modelFilter)
         self.descriptionText = QtGui.QTextBrowser(self.splitter)
@@ -254,7 +256,7 @@ class Ui_dataCatalogDlg(object):
         self.addWMSbtn.setEnabled(False)
         self.addWMSbtn.setMinimumSize(QtCore.QSize(0, 0))
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/geopunt4Qgis/images/Wms.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/WmsLayer.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.addWMSbtn.setIcon(icon2)
         self.addWMSbtn.setAutoDefault(False)
         self.addWMSbtn.setObjectName(_fromUtf8("addWMSbtn"))
@@ -262,16 +264,30 @@ class Ui_dataCatalogDlg(object):
         self.addWFSbtn = QtGui.QPushButton(dataCatalogDlg)
         self.addWFSbtn.setEnabled(False)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/geopunt4Qgis/images/Wfs.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/WfsLayer.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.addWFSbtn.setIcon(icon3)
         self.addWFSbtn.setAutoDefault(False)
         self.addWFSbtn.setObjectName(_fromUtf8("addWFSbtn"))
         self.horizontalLayout_2.addWidget(self.addWFSbtn)
+        self.addWCSbtn = QtGui.QPushButton(dataCatalogDlg)
+        self.addWCSbtn.setEnabled(False)
+        icon4 = QtGui.QIcon()
+        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/WcsLayer.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.addWCSbtn.setIcon(icon4)
+        self.addWCSbtn.setObjectName(_fromUtf8("addWCSbtn"))
+        self.horizontalLayout_2.addWidget(self.addWCSbtn)
+        self.addWMTSbtn = QtGui.QPushButton(dataCatalogDlg)
+        self.addWMTSbtn.setEnabled(False)
+        icon5 = QtGui.QIcon()
+        icon5.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/tiles.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.addWMTSbtn.setIcon(icon5)
+        self.addWMTSbtn.setObjectName(_fromUtf8("addWMTSbtn"))
+        self.horizontalLayout_2.addWidget(self.addWMTSbtn)
         self.DLbtn = QtGui.QPushButton(dataCatalogDlg)
         self.DLbtn.setEnabled(False)
-        icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/geopunt4Qgis/images/zip.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.DLbtn.setIcon(icon4)
+        icon6 = QtGui.QIcon()
+        icon6.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/zip.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.DLbtn.setIcon(icon6)
         self.DLbtn.setAutoDefault(False)
         self.DLbtn.setObjectName(_fromUtf8("DLbtn"))
         self.horizontalLayout_2.addWidget(self.DLbtn)
@@ -319,8 +335,12 @@ class Ui_dataCatalogDlg(object):
         self.modelFilterCbx.setItemText(1, _translate("dataCatalogDlg", "WMS", None))
         self.modelFilterCbx.setItemText(2, _translate("dataCatalogDlg", "WFS", None))
         self.modelFilterCbx.setItemText(3, _translate("dataCatalogDlg", "Download", None))
-        self.addWMSbtn.setText(_translate("dataCatalogDlg", "WMS toevoegen", None))
-        self.addWFSbtn.setText(_translate("dataCatalogDlg", "WFS toevoegen", None))
+        self.modelFilterCbx.setItemText(4, _translate("dataCatalogDlg", "WCS", None))
+        self.modelFilterCbx.setItemText(5, _translate("dataCatalogDlg", "WMTS", None))
+        self.addWMSbtn.setText(_translate("dataCatalogDlg", "WMS ", None))
+        self.addWFSbtn.setText(_translate("dataCatalogDlg", "WFS ", None))
+        self.addWCSbtn.setText(_translate("dataCatalogDlg", "WCS", None))
+        self.addWMTSbtn.setText(_translate("dataCatalogDlg", "WMTS", None))
         self.DLbtn.setText(_translate("dataCatalogDlg", "Downloaden", None))
         self.closeBtn.setText(_translate("dataCatalogDlg", "Sluiten", None))
         self.msgLbl.setText(_translate("dataCatalogDlg", "<html><head/><body><p><a href=\"http://www.nationaalgeoregister.nl/\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.nationaalgeoregister.nl/</span></a></p></body></html>", None))

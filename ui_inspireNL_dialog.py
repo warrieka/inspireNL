@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_inspireNL_dialog.ui'
 #
-# Created: Mon Aug 31 22:09:17 2015
+# Created: Sat Sep  5 20:38:36 2015
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!

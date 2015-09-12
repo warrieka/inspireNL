@@ -41,7 +41,6 @@ class dataCatalog(QtGui.QDialog):
         self.bar = QgsMessageBar() 
         self.bar.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed )
         self.ui.verticalLayout.addWidget(self.bar)
-        
         #vars
         self.firstShow = True
         self.wms = None
@@ -80,15 +79,20 @@ class dataCatalog(QtGui.QDialog):
         self.model.clear()
          
         for rec in records:
-            title = QtGui.QStandardItem( rec['title'] )         #0
-            wms = QtGui.QStandardItem( rec['wms'] )             #1
-            downloadLink = QtGui.QStandardItem(rec['download']) #2
-            id = QtGui.QStandardItem( rec['uuid'] )             #3
-            abstract = QtGui.QStandardItem( rec['abstract'] )   #4
-            wfs =     QtGui.QStandardItem( rec['wfs'] )         #5
-            wcs =     QtGui.QStandardItem( rec['wcs'] )         #6
-            wmts =    QtGui.QStandardItem( rec['wmts'] )        #7
-            self.model.appendRow([title,wms,downloadLink,id,abstract,wfs,wcs,wmts])
+            title = QtGui.QStandardItem( rec['title'] )            #0
+            wms = QtGui.QStandardItem( rec['wms'][1] )             #1
+            downloadLink = QtGui.QStandardItem(rec['download'])    #2
+            id = QtGui.QStandardItem( rec['uuid'] )                #3
+            abstract = QtGui.QStandardItem( rec['abstract'] )      #4
+            wfs =     QtGui.QStandardItem( rec['wfs'][1] )         #5
+            wcs =     QtGui.QStandardItem( rec['wcs'][1] )         #6
+            wmts =    QtGui.QStandardItem( rec['wmts'][1] )        #7
+            ### 
+            wmsName = QtGui.QStandardItem( rec['wms'][0] )             #8
+            wfsName =     QtGui.QStandardItem( rec['wfs'][0] )         #9
+            wcsName =     QtGui.QStandardItem( rec['wcs'][0] )         #10
+            wmtsName =    QtGui.QStandardItem( rec['wmts'][0] )        #11
+            self.model.appendRow([title,wms,downloadLink,id,abstract,wfs,wcs,wmts,wmsName,wfsName,wcsName,wmtsName])
 
     #overwrite
     def show(self):
@@ -119,12 +123,18 @@ class dataCatalog(QtGui.QDialog):
         if self.ui.resultView.selectedIndexes(): 
            row = self.ui.resultView.selectedIndexes()[0].row()  
            
-           title    = self.proxyModel.data( self.proxyModel.index( row, 0) )
            self.wms = self.proxyModel.data( self.proxyModel.index( row, 1) )
            self.dl  = self.proxyModel.data( self.proxyModel.index( row, 2) )
            self.wfs = self.proxyModel.data( self.proxyModel.index( row, 5) )
            self.wcs = self.proxyModel.data( self.proxyModel.index( row, 6) )
            self.wmts= self.proxyModel.data( self.proxyModel.index( row, 7) )
+           ##
+           self.wmsLr   = self.proxyModel.data( self.proxyModel.index( row, 8) )
+           self.wfsLr   = self.proxyModel.data( self.proxyModel.index( row, 9) )
+           self.wcsLr   = self.proxyModel.data( self.proxyModel.index( row, 10) )
+           self.wmtsLr  = self.proxyModel.data( self.proxyModel.index( row, 11) )
+           ##
+           title    = self.proxyModel.data( self.proxyModel.index( row, 0) )
            uuid     = self.proxyModel.data( self.proxyModel.index( row, 3) )
            abstract = self.proxyModel.data( self.proxyModel.index( row, 4) )
            
@@ -176,7 +186,7 @@ class dataCatalog(QtGui.QDialog):
            self.proxyModel.setFilterRegExp(None)
         
     def search(self): 
-        try:      
+        try:  
           if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
@@ -219,6 +229,7 @@ class dataCatalog(QtGui.QDialog):
         except:
           self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
           return 
+        
         if len(lyrs) == 0:
             self.bar.pushMessage("WMS", 
             QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
@@ -274,7 +285,6 @@ class dataCatalog(QtGui.QDialog):
         crs = [n[2] for n in lyrs if n[1] == layerTitle ][0]
         url =  self.wfs.split('?')[0]
         wfsUri = metadata.makeWFSuri( url, layerName, crs )
-        print  wfsUri
         try:
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")
             QgsMapLayerRegistry.instance().addMapLayer(vlayer)
@@ -283,10 +293,72 @@ class dataCatalog(QtGui.QDialog):
             return 
 
     def addWMTS(self):
-      print self.wmts
+      if self.wmts == None: return
+      try:
+          lyrs =  metadata.getWMTSlayersNames( self.wmts, self.s.proxyUrl )
+      except:
+          self.bar.pushMessage("Error",'Kan niet connecteren met '+ self.wmts, level=QgsMessageBar.CRITICAL, duration=10)
+          return 
+      if len(lyrs) == 0:
+          self.bar.pushMessage("WMTS", 
+          QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+                    "Kan geen lagen vinden in: %s" % self.wmts ), level=QgsMessageBar.WARNING, duration=10)
+          return
+      elif len(lyrs) == 1:
+          layerTitle = lyrs[0][1]
+      else:
+         layerTitle, accept = QtGui.QInputDialog.getItem(self, "WMTS toevoegen", 
+                                         "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
+         if not accept: return
+        
+      layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0]
+      matrix = [n[2] for n in lyrs if n[1] == layerTitle ][0]
+      frmt =  [n[3] for n in lyrs if n[1] == layerTitle ][0]
+      srs = [n[4] for n in lyrs if n[1] == layerTitle ][0]
+      
+      wmtsUrl= metadata.makeWMTSuri(self.wmts , layerName, matrix, format=frmt, srsname=srs)
+  
+      try:
+          rlayer = QgsRasterLayer(wmtsUrl, layerTitle, 'wms') 
+          if rlayer.isValid():
+              QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+          else:  
+              self.bar.pushMessage("Error", 
+              QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", "Kan WMS niet laden"), 
+              level=QgsMessageBar.CRITICAL, duration=10) 
+      except: 
+          self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+          return 
     
     def addWCS(self):
-      print self.wcs
+      try:
+          lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
+      except:
+          self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+          return 
+        
+      if len(lyrs) == 0:
+          self.bar.pushMessage("WCS", 
+          QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+                    "Kan geen lagen vinden in: %s" % self.wcs ), level=QgsMessageBar.WARNING, duration=10)
+          return
+      elif len(lyrs) == 1:
+          layerTitle = lyrs[0][1]
+      else:
+          layerTitle, accept = QtGui.QInputDialog.getItem(self, "WCS toevoegen", 
+                              "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
+          if not accept: return
+        
+      layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0] 
+      layerFormat  = [n[2] for n in lyrs if n[1] == layerTitle ][0] 
+      wcsUri = metadata.makeWCSuri( self.wcs, layerName, format=layerFormat )
+      print wcsUri
+      try:
+          rlayer = QgsRasterLayer( wcsUri, layerTitle , "wcs")
+          QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+      except: 
+          self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+          return       
             
     def clean(self):
         self.model.clear()

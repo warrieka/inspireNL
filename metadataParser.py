@@ -50,41 +50,41 @@ class MDdata:
         links = links.split('|') 
         for n in range(1, len( links )):
             if "OGC:WFS" in links[n].upper(): 
-              if "http" in  links[n - 1]: #some wfs are store with relative path's, ignore those
-                  return links[n - 1]
-        return ""
+              if "http" in  links[n - 1]:
+                  return ( links[n - 2], links[n - 1])
+        return ("","")
       
     def _findWMS(self , node ):
         links =  "|".join( [ n.text for n in node.findall("link") ] )
         links = links.split('|') 
-        for n in range(1, len( links )):
+        for n in range(2, len( links )):
             if "OGC:WMS" in links[n].upper(): 
-              if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
-                  return links[n - 1]
-        return ""
+              if "http" in  links[n - 1]: 
+                  return ( links[n - 2], links[n - 1])
+        return ("","")
       
     def _findWMTS(self , node ):
         links =  "|".join( [ n.text for n in node.findall("link") ] )
         links = links.split('|') 
-        for n in range(1, len( links )):
+        for n in range(2, len( links )):
             if "OGC:WMTS" in links[n].upper(): 
-              if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
-                  return links[n - 1]
-        return ""
+              if "http" in  links[n - 1]: 
+                return ( links[n - 2], links[n - 1])
+        return ("","")
 
     def _findWCS(self , node ):
         links =  "|".join( [ n.text for n in node.findall("link") ] )
         links = links.split('|') 
-        for n in range(1, len( links )):
+        for n in range(2, len( links )):
             if "OGC:WCS" in links[n].upper(): 
               if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
-                  return links[n - 1]
-        return ""
+                return ( links[n - 2], links[n - 1])
+        return ("","")
 
     def _findDownload(self , node):
         links =  "|".join( [ n.text for n in node.findall("link") ] )
         links = links.split('|') 
-        for n in range(1, len( links )):
+        for n in range(2, len( links )):
             if "DOWNLOAD" in links[n].upper(): 
                if "http" in  links[n - 1]: #some files are stored with relative path's, ignore those
                   return links[n - 1]
@@ -113,7 +113,7 @@ class MDReader:
         data["any"] = "*" + unicode(q).encode('utf-8') + "*"
         data["to"] = to
         data["from"] = start
-        data["orgName"] = orgName
+        data["orgName"] =  unicode(orgName).encode('utf-8')
                 
         if dataType: data['type']= dataType
         if siteId: data['siteId']= siteId                
@@ -130,7 +130,6 @@ class MDReader:
 
         values = urllib.urlencode(data)
         result = geopuntUrl + values
-        print result
         return result
           
     def list_inspire_theme(self, q=''):
@@ -218,7 +217,7 @@ class MDReader:
 
     def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
         start= 1
-        step= 100        
+        step= 100   
         searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
         count = int( searchResult[0].attrib["count"] )
         start += step
@@ -236,16 +235,16 @@ class metaError(Exception):
     def __str__(self):
         return repr(self.message)
    
-def getWmsLayerNames( url, proxyUrl='', port=''):
-      if (not "request=GetCapabilities" in url.lower()) or (not "service=wms" in url.lower()):
+def getWmsLayerNames( url, proxyUrl=''):
+      if (not "request=getcapabilities" in url.lower()) or (not "service=wms" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
       else: 
           capability = url
           
-      if (isinstance(proxyUrl, unicode) or isinstance(proxyUrl, str)) & proxyUrl.startswith("http://"):
-          netLoc = proxyUrl.strip() + ":" + port
-          proxy = urllib2.ProxyHandler({'http': netLoc ,'https': netLoc })
-          opener = urllib2.build_opener(proxy)
+      if proxyUrl:
+          proxy = urllib2.ProxyHandler({'http': proxyUrl})
+          auth = urllib2.HTTPBasicAuthHandler()
+          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
           responseWMS =  opener.open(capability)
       else:
           responseWMS =  urllib2.urlopen(capability)
@@ -264,15 +263,15 @@ def getWmsLayerNames( url, proxyUrl='', port=''):
 
       return layerNames
 
-def getWFSLayerNames( url, proxyUrl='', port=''):
-      if (not "request=GetCapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
+def getWFSLayerNames( url, proxyUrl='' ):
+      if (not "request=getcapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
           capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
       else: 
           capability = url
-      if (isinstance(proxyUrl, unicode) or isinstance(proxyUrl, str)) & proxyUrl.startswith("http://"):
-          netLoc = proxyUrl.strip() + ":" + port
-          proxy = urllib2.ProxyHandler({'http': netLoc ,'https': netLoc })
-          opener = urllib2.build_opener(proxy)
+      if proxyUrl:
+          proxy = urllib2.ProxyHandler({'http': proxyUrl})
+          auth = urllib2.HTTPBasicAuthHandler()
+          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
           responseWFS =  opener.open(capability)
       else:
           responseWFS =  urllib2.urlopen(capability)
@@ -286,12 +285,102 @@ def getWFSLayerNames( url, proxyUrl='', port=''):
           title = lyr.find("{http://www.opengis.net/wfs}Title")
           srs = lyr.find("{http://www.opengis.net/wfs}SRS")
           if ( name != None) and ( title != None ):
-              if srs == None: layerNames.append(( name.text, title.text, 'EPSG:31370'))
+              if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
               else: layerNames.append(( name.text, title.text, srs.text))
 
       return layerNames
 
-def makeWFSuri( url, name='', srsname="EPSG:31370", version='1.0.0' ):
+def getWMTSlayersNames( url, proxyUrl='' ):
+    if (not "request=getcapabilities" in url.lower()) or (not "service=wmts" in url.lower()):
+        capability = url.split("?")[0] + "?service=WMTS&request=Getcapabilities"
+    else: 
+        capability = url
+    if proxyUrl:
+        proxy = urllib2.ProxyHandler({'http': proxyUrl})
+        auth = urllib2.HTTPBasicAuthHandler()
+        opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+        responseWMTS =  opener.open(capability)
+    else:
+        responseWMTS =  urllib2.urlopen(capability)
+        
+    result = ET.parse(responseWMTS).getroot()
+    content = result.find( "{http://www.opengis.net/wmts/1.0}Contents" )
+    layers =  content.findall( "{http://www.opengis.net/wmts/1.0}Layer" )
+    layerNames = []
+    
+    matrixSets = content.findall("{http://www.opengis.net/wmts/1.0}TileMatrixSet")
+
+    for lyr in layers:
+        name= lyr.find("{http://www.opengis.net/ows/1.1}Identifier")
+        title = lyr.find("{http://www.opengis.net/ows/1.1}Title")
+        matrix = lyr.find("{http://www.opengis.net/wmts/1.0}TileMatrixSetLink/{http://www.opengis.net/wmts/1.0}TileMatrixSet")
+        format = lyr.find("{http://www.opengis.net/wmts/1.0}Format")
+        
+        srsList = [ n.find("{http://www.opengis.net/ows/1.1}SupportedCRS").text
+                    for n in matrixSets if n.find("{http://www.opengis.net/ows/1.1}Identifier").text == matrix.text]
+
+        if srsList: srs =  "EPSG:"+ srsList[0].split(':')[-1]
+        else: srs = "" 
+        
+        if ( name != None) and ( title != None ) and ( matrix != None ) and ( format != None ):
+              layerNames.append(( name.text, title.text, matrix.text, format.text, srs ))
+
+    return layerNames
+
+def getWCSlayerNames( url, proxyUrl='' ):
+    wcsNS = "http://www.opengis.net/wcs/1.1" 
+    
+    if (not "request=getcapabilities" in url.lower()) or (not "service=wcs" in url.lower()):
+      capability = url.split("?")[0] + "?request=GetCapabilities&version=1.1.0&service=wcs"
+    else: 
+      capability = url
+    if proxyUrl:
+      proxy = urllib2.ProxyHandler({'http': proxyUrl})
+      auth = urllib2.HTTPBasicAuthHandler()
+      opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+      responseWCS =  opener.open(capability)
+    else:
+      responseWCS =  urllib2.urlopen(capability)
+    
+    responseTxt = responseWCS.read()
+    if 'xmlns:wcs="http://www.opengis.net/wcs/1.1.1"' in responseTxt:
+        wcsNS = "http://www.opengis.net/wcs/1.1.1" 
+     
+    result = ET.fromstring(responseTxt) 
+    content = result.find( "{%s}Contents" % wcsNS)
+    layers =  content.findall( "{%s}CoverageSummary" % wcsNS)
+    layerNames = []
+    
+    for lyr in layers:
+       Identifier= lyr.find("{%s}Identifier" % wcsNS)
+       title = lyr.find("{http://www.opengis.net/ows/1.1}Title")
+
+       DescribeCoverage = url.split("?")[0] + "?request=DescribeCoverage&version=1.1.0&service=wcs&Identifiers=" + Identifier.text
+       if proxyUrl:
+         proxy = urllib2.ProxyHandler({'http': proxyUrl})
+         auth = urllib2.HTTPBasicAuthHandler()
+         opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+         responseDC =  opener.open(DescribeCoverage)
+       else:
+         responseDC =  urllib2.urlopen(DescribeCoverage)
+
+       resultDC = ET.parse(responseDC).getroot()
+       CoverageDescription = resultDC.find( "{%s}CoverageDescription" % wcsNS)
+       
+       Identifier = CoverageDescription.find("{%s}Identifier" % wcsNS)
+
+       formats =  CoverageDescription.findall( "{%s}SupportedFormat" % wcsNS)
+       if [n.text for n in formats if 'tiff' in n.text.lower()] : 
+         format = [n.text for n in formats if 'tiff' in n.text.lower()][0]
+       elif formats: format = formats[0].text
+       else: format = "image/tiff"
+       
+       if ( Identifier != None) and (title != None):    
+            layerNames.append(( Identifier.text, title.text, format ))
+
+    return layerNames
+
+def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
     params = {  'SERVICE': 'WFS',
                 'VERSION': version ,
                 'REQUEST': 'GetFeature',
@@ -300,3 +389,30 @@ def makeWFSuri( url, name='', srsname="EPSG:31370", version='1.0.0' ):
     
     uri = url.split("?")[0] + '?' + urllib.unquote( urllib.urlencode(params) )
     return uri
+
+def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', format='image/png' ):
+    params = {  'tileMatrixSet': tileMatrixSet,
+                'styles': styles, 
+                'format': format ,
+                'layers': layer,
+                'crs': srsname,
+                'url': url.split('?')[0]  + '?service=WMTS'}
+    
+    uri = urllib.unquote( urllib.urlencode(params)  )
+    return uri
+
+def makeWCSuri( url, layer,srsname="EPSG:28992", format="GeoTIFF" ):
+    """ cache=PreferNetwork
+        crs=EPSG:28992
+        format=GeoTIFF
+        identifier=dank:altr_a04_gi_bodemC
+        url=http://geodata.rivm.nl/geoserver/wcs?version%3D1.0.0%26"""
+    params = {  'cache': 'PreferNetwork',
+                'format': format ,
+                'identifier': layer,
+                'crs': srsname,
+                'url': url.split('?')[0]  } #+ '?version%3D1.0.0%26'
+    
+    uri = urllib.unquote( urllib.urlencode(params)  )
+    return uri 
+      

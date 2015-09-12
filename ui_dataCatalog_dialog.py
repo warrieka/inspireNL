@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Sat Sep  5 20:38:36 2015
+# Created: Sun Sep 13 00:40:40 2015
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -32,7 +32,6 @@ class Ui_dataCatalogDlg(object):
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/plugins/inspireNL/images/icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         dataCatalogDlg.setWindowIcon(icon)
         self.verticalLayout = QtGui.QVBoxLayout(dataCatalogDlg)
-        self.verticalLayout.setContentsMargins(-1, -1, -1, 2)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
@@ -297,6 +296,8 @@ class Ui_dataCatalogDlg(object):
         self.closeBtn.setObjectName(_fromUtf8("closeBtn"))
         self.horizontalLayout_2.addWidget(self.closeBtn)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_3 = QtGui.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
         self.msgLbl = QtGui.QLabel(dataCatalogDlg)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.MinimumExpanding, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -307,7 +308,8 @@ class Ui_dataCatalogDlg(object):
         self.msgLbl.setOpenExternalLinks(True)
         self.msgLbl.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByKeyboard|QtCore.Qt.LinksAccessibleByMouse)
         self.msgLbl.setObjectName(_fromUtf8("msgLbl"))
-        self.verticalLayout.addWidget(self.msgLbl)
+        self.horizontalLayout_3.addWidget(self.msgLbl)
+        self.verticalLayout.addLayout(self.horizontalLayout_3)
         self.addWMSaction = QtGui.QAction(dataCatalogDlg)
         self.addWMSaction.setObjectName(_fromUtf8("addWMSaction"))
         self.Download_action = QtGui.QAction(dataCatalogDlg)

@@ -557,6 +557,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="wfsBboxchk">
+     <property name="text">
+      <string>WFS resultaat beperken tot huidige Kaartbeeld</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <widget class="QLabel" name="msgLbl">

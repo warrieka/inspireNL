@@ -114,8 +114,8 @@ class dataCatalog(QtGui.QDialog):
                 self.firstShow = False      
              else:
                 self.bar.pushMessage(
-                  QtCore.QCoreApplication.translate("geopunt4QgisPoidialog", "Waarschuwing "), 
-                  QtCore.QCoreApplication.translate("geopunt4QgisPoidialog", 
+                  QtCore.QCoreApplication.translate("datacatalog", "Waarschuwing "), 
+                  QtCore.QCoreApplication.translate("datacatalog", 
                     "Kan geen verbing maken met het internet."), level=QgsMessageBar.WARNING, duration=3)
       
     #eventhandlers
@@ -141,7 +141,7 @@ class dataCatalog(QtGui.QDialog):
            self.ui.descriptionText.setText(
              """<h3>%s</h3><div>%s</div><br/><br/>
              <a href='http://www.nationaalgeoregister.nl/geonetwork/srv/search/?uuid=%s'>
-             Ga naar fiche</a>""" %  (title , abstract, uuid ))
+             Bekijk in Nationaal Georegister</a>""" %  (title , abstract, uuid ))
            
            if self.wms: self.ui.addWMSbtn.setEnabled(1)
            else: self.ui.addWMSbtn.setEnabled(0)
@@ -187,6 +187,7 @@ class dataCatalog(QtGui.QDialog):
         
     def search(self): 
         try:  
+          QtGui.QApplication.setOverrideCursor( QtGui.QCursor(QtCore.Qt.WaitCursor))
           if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
@@ -205,15 +206,17 @@ class dataCatalog(QtGui.QDialog):
         except:
            self.bar.pushMessage("Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=3)
            return
+        finally:
+           QtGui.QApplication.restoreOverrideCursor()
         
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
         self._setModel(searchResult.records)
         if searchResult.count == 0:
            self.bar.pushMessage(
-             QtCore.QCoreApplication.translate("geopunt4QgisPoidialog", "Waarschuwing "), 
-             QtCore.QCoreApplication.translate("geopunt4QgisPoidialog", "Er werden geen resultaten gevonde voor deze zoekopdracht"),
-                duration=5)
+             QtCore.QCoreApplication.translate("datacatalog", "Waarschuwing "), 
+             QtCore.QCoreApplication.translate("datacatalog", 
+                                               "Er werden geen resultaten gevonde voor deze zoekopdracht"), duration=5)
 
     def openUrl(self, url):
         if url: webbrowser.open_new_tab( url.encode("utf-8") )
@@ -232,7 +235,7 @@ class dataCatalog(QtGui.QDialog):
         
         if len(lyrs) == 0:
             self.bar.pushMessage("WMS", 
-            QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+            QtCore.QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wms ), level=QgsMessageBar.WARNING, duration=10)
             return 
         elif len(lyrs) == 1:
@@ -256,7 +259,7 @@ class dataCatalog(QtGui.QDialog):
                QgsMapLayerRegistry.instance().addMapLayer(rlayer)
             else:  
                 self.bar.pushMessage("Error", 
-                QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", "Kan WMS niet laden"), 
+                QtCore.QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
                 level=QgsMessageBar.CRITICAL, duration=10) 
         except: 
             self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
@@ -264,6 +267,7 @@ class dataCatalog(QtGui.QDialog):
       
     def addWFS(self):    
         if self.wfs == None: return
+      
         try:
             lyrs =  metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
         except:
@@ -271,7 +275,7 @@ class dataCatalog(QtGui.QDialog):
             return 
         if len(lyrs) == 0:
             self.bar.pushMessage("WFS", 
-            QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+            QtCore.QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wfs ), level=QgsMessageBar.WARNING, duration=10)
             return
         elif len(lyrs) == 1:
@@ -284,7 +288,16 @@ class dataCatalog(QtGui.QDialog):
         layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0]
         crs = [n[2] for n in lyrs if n[1] == layerTitle ][0]
         url =  self.wfs.split('?')[0]
-        wfsUri = metadata.makeWFSuri( url, layerName, crs )
+                
+        if self.ui.wfsBboxchk.isChecked():
+            extent = self.iface.mapCanvas().extent()
+            minX, minY = self.gh.prjPtFromMapCrs([extent.xMinimum(),extent.yMinimum()], int(crs.split(":")[-1]) )
+            maxX, maxY = self.gh.prjPtFromMapCrs([extent.xMaximum(),extent.yMaximum()], int(crs.split(":")[-1]) )
+            bbox = [minX, minY, maxX, maxY]
+        else:
+            bbox = None
+        
+        wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=bbox )
         try:
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")
             QgsMapLayerRegistry.instance().addMapLayer(vlayer)
@@ -301,7 +314,7 @@ class dataCatalog(QtGui.QDialog):
           return 
       if len(lyrs) == 0:
           self.bar.pushMessage("WMTS", 
-          QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+          QtCore.QCoreApplication.translate("datacatalog", 
                     "Kan geen lagen vinden in: %s" % self.wmts ), level=QgsMessageBar.WARNING, duration=10)
           return
       elif len(lyrs) == 1:
@@ -324,7 +337,7 @@ class dataCatalog(QtGui.QDialog):
               QgsMapLayerRegistry.instance().addMapLayer(rlayer)
           else:  
               self.bar.pushMessage("Error", 
-              QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", "Kan WMS niet laden"), 
+              QtCore.QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
               level=QgsMessageBar.CRITICAL, duration=10) 
       except: 
           self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
@@ -332,14 +345,17 @@ class dataCatalog(QtGui.QDialog):
     
     def addWCS(self):
       try:
+          QtGui.QApplication.setOverrideCursor( QtGui.QCursor(QtCore.Qt.WaitCursor))
           lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
       except:
           self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
           return 
-        
+      finally:
+           QtGui.QApplication.restoreOverrideCursor()
+           
       if len(lyrs) == 0:
           self.bar.pushMessage("WCS", 
-          QtCore.QCoreApplication.translate("geopunt4QgisDataCatalog", 
+          QtCore.QCoreApplication.translate("datacatalog", 
                     "Kan geen lagen vinden in: %s" % self.wcs ), level=QgsMessageBar.WARNING, duration=10)
           return
       elif len(lyrs) == 1:
@@ -352,10 +368,14 @@ class dataCatalog(QtGui.QDialog):
       layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0] 
       layerFormat  = [n[2] for n in lyrs if n[1] == layerTitle ][0] 
       wcsUri = metadata.makeWCSuri( self.wcs, layerName, format=layerFormat )
-      print wcsUri
       try:
           rlayer = QgsRasterLayer( wcsUri, layerTitle , "wcs")
-          QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+          if rlayer.isValid():
+              QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+          else:  
+              self.bar.pushMessage("Error", 
+              QtCore.QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 
+              level=QgsMessageBar.CRITICAL, duration=10) 
       except: 
           self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
           return       
@@ -373,7 +393,7 @@ class dataCatalog(QtGui.QDialog):
         self.ui.msgLbl.setText("" )
         self.ui.DLbtn.setEnabled(0)
         self.ui.addWFSbtn.setEnabled(0)
-        self.ui.addWMSbtn.setEnabled(0)
+        self.ui.addWMTSbtn.setEnabled(0)
         self.ui.modelFilterCbx.setCurrentIndex(0)
         
 def internet_on(proxyUrl=None):

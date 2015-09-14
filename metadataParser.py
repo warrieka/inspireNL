@@ -98,7 +98,7 @@ class MDReader:
 
         self.dataTypes = [["Dataset", "dataset"],["Datasetserie","series"],
                           ["Objectencatalogus","model"],["Service","service"]]
-        self.inspireServiceTypes =  ["Discovery","Transformation","View","Other","Invoke"]
+        self.inspireServiceTypes =  ["Discovery","Transformation","View", "Download","Other","Invoke"]
         self.inspireannex =  ["i","ii","iii"]
         
         self.opener = None

@@ -9,12 +9,12 @@
 [general]
 name=INSPIRE Nederland plugin voor QGIS
 qgisMinimumVersion=2.8
-description=Datasets van de het Nederlandse Dataportaal Nationaal Georegister bevragen en toevoegen aan QGIS.
+description=Tool to query datasets of the Dutch national dataportal "National Georegistry (NGR)" and add it to QGIS. - Datasets van de het Nederlandse Dataportaal Nationaal Georegister bevragen en toevoegen aan QGIS.
 version=0.1
 author=KGIS
 email=kaywarrie@gmail.com
 
-about=Het Nationaal Georegister (NGR) is dé centrale voorziening voor het beschrijven en ontsluiten van geo-informatie van Nederland. Het NGR bevat het overzicht van beschikbare datasets en services. Vele van deze datasets beschikken over services die u in QGIS kunt toevoegen. De bedoeling van deze plugin is om het opzoeken en toevoegen aan QGIS als te vergemakkelijken door het aan te bieden geintegreerd QGIS.
+about=The National Georegistry (NGR) is the central metadatabase for describing and accessing geographic information in the Netherlands. The NGR contains the list of available datasets and services. Many of these datasets have services that you can add in QGIS. The purpose of this plugin is to search for them and add them to QGIS. - Het Nationaal Georegister (NGR) is de centrale voorziening voor het beschrijven en ontsluiten van geo-informatie van Nederland. Het NGR bevat het overzicht van beschikbare datasets en services. Vele van deze datasets beschikken over services die u in QGIS kunt toevoegen. De bedoeling van deze plugin is om het opzoeken en toevoegen aan QGIS als te vergemakkelijken door het aan te bieden geintegreerd QGIS.
 
 tracker=https://github.com/warrieka/inspireNL/issues
 repository=https://github.com/warrieka/inspireNL
@@ -30,7 +30,7 @@ tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister
 
 homepage=https://github.com/warrieka/inspireNL
 category=Plugins
-icon=icon.png
+icon=images/icon.png
 # experimental flag
 experimental=True
 

@@ -119,10 +119,7 @@ class MDReader:
         if siteId: data['siteId']= siteId                
                 
         if inspiretheme: 
-            if " " in inspiretheme and not " or " in inspiretheme.lower():
-                data["inspiretheme"] = '"' +  inspiretheme + '"' 
-            else: 
-                data["inspiretheme"] = inspiretheme            
+            data["inspiretheme"] = inspiretheme            
         if inspireannex and (inspireannex.lower() in self.inspireannex ) : 
             data["inspireannex"] = inspireannex.lower()
         if inspireServiceType : 
@@ -217,7 +214,7 @@ class MDReader:
 
     def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
         start= 1
-        step= 100   
+        step= 1000
         searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
         count = int( searchResult[0].attrib["count"] )
         start += step
@@ -380,12 +377,14 @@ def getWCSlayerNames( url, proxyUrl='' ):
 
     return layerNames
 
-def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
+def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0', bbox=None ):
     params = {  'SERVICE': 'WFS',
                 'VERSION': version ,
                 'REQUEST': 'GetFeature',
                 'TYPENAME': name,
                 'SRSNAME': srsname }
+    #BBOX=105097.,475399.,140994.,499764.
+    if bbox: params['BBOX'] = ",".join([str(s) for s in bbox])
     
     uri = url.split("?")[0] + '?' + urllib.unquote( urllib.urlencode(params) )
     return uri

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Sun Sep 13 00:42:04 2015
+# Created: Mon Sep 14 22:23:39 2015
 #      by: PyQt4 UI code generator 4.11.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -296,6 +296,9 @@ class Ui_dataCatalogDlg(object):
         self.closeBtn.setObjectName(_fromUtf8("closeBtn"))
         self.horizontalLayout_2.addWidget(self.closeBtn)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.wfsBboxchk = QtGui.QCheckBox(dataCatalogDlg)
+        self.wfsBboxchk.setObjectName(_fromUtf8("wfsBboxchk"))
+        self.verticalLayout.addWidget(self.wfsBboxchk)
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
         self.msgLbl = QtGui.QLabel(dataCatalogDlg)
@@ -345,6 +348,7 @@ class Ui_dataCatalogDlg(object):
         self.addWMTSbtn.setText(_translate("dataCatalogDlg", "WMTS", None))
         self.DLbtn.setText(_translate("dataCatalogDlg", "Downloaden", None))
         self.closeBtn.setText(_translate("dataCatalogDlg", "Sluiten", None))
+        self.wfsBboxchk.setText(_translate("dataCatalogDlg", "WFS resultaat beperken tot huidige Kaartbeeld", None))
         self.msgLbl.setText(_translate("dataCatalogDlg", "<html><head/><body><p><a href=\"http://www.nationaalgeoregister.nl/\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.nationaalgeoregister.nl/</span></a></p></body></html>", None))
         self.addWMSaction.setText(_translate("dataCatalogDlg", "WMS toevoegen", None))
         self.Download_action.setText(_translate("dataCatalogDlg", "Downloadpagina openen", None))

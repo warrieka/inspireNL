@@ -107,13 +107,16 @@ class MDReader:
              auth = urllib2.HTTPBasicAuthHandler()
              self.opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
         
-    def _createFindUrl(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
-        geopuntUrl = self.geoNetworkUrl + "/q?fast=index&sortBy=changeDate&"
+    def _createFindUrl(self, q="", start=1, to=20, orgName='', dataType='', siteId='',
+                       inspiretheme='', inspireannex='', inspireServiceType='', keyword=""):
+        geopuntUrl = self.geoNetworkUrl + "/q?fast=index&"
         data = {}
+        data["category"] = "inspire"   #REMARK: NL specifik
         data["any"] = "*" + unicode(q).encode('utf-8') + "*"
         data["to"] = to
         data["from"] = start
         data["orgName"] =  unicode(orgName).encode('utf-8')
+        data["keyword"] =  unicode(keyword).encode('utf-8')
                 
         if dataType: data['type']= dataType
         if siteId: data['siteId']= siteId                
@@ -146,7 +149,7 @@ class MDReader:
             return themes
     
     def list_suggestionKeyword(self, q=''):
-        url = self.geoNetworkUrl + "/main.search.suggest?field=any" 
+        url = self.geoNetworkUrl + "/main.search.suggest?field=keyword"
         if q:
             url= url + "&q=" + unicode(q).encode('utf-8') 
         
@@ -162,7 +165,7 @@ class MDReader:
             return result[1]
 
     def list_organisations(self, q=''):
-        url = self.geoNetworkUrl + "/main.search.suggest?field=orgName" 
+        url = self.geoNetworkUrl + "/main.search.suggest?field=orgName"
         if q:
             url= url + "&q=" + unicode(q).encode('utf-8') 
         try:
@@ -198,8 +201,8 @@ class MDReader:
             bronnen.sort()
             return bronnen
 
-    def search(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='' ):
-        url = self._createFindUrl( q, start, to,  orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
+    def search(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='', keyword='' ):
+        url = self._createFindUrl( q, start, to,  orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType, keyword)
         try:
             if self.opener: response = self.opener.open(url, timeout=self.timeout)
             else: response = urllib2.urlopen(url, timeout=self.timeout)
@@ -212,10 +215,10 @@ class MDReader:
             resultXML = result.getroot()
             return  resultXML
 
-    def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType=''):
+    def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='', keyword=''):
         start= 1
         step= 1000
-        searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
+        searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType, keyword)
         count = int( searchResult[0].attrib["count"] )
         start += step
         while (start) <= count:  
@@ -369,7 +372,7 @@ def getWCSlayerNames( url, proxyUrl='' ):
        formats =  CoverageDescription.findall( "{%s}SupportedFormat" % wcsNS)
        if [n.text for n in formats if 'tiff' in n.text.lower()] : 
          format = [n.text for n in formats if 'tiff' in n.text.lower()][0]
-       elif formats: format = formats[0].text
+       elif formats: format = formats[0].text.split(";")[0]
        else: format = "image/tiff"
        
        if ( Identifier != None) and (title != None):    

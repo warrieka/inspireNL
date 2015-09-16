@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui_inspireNL_dialog.ui'
 #
-# Created: Mon Sep 14 22:38:52 2015
-#      by: PyQt4 UI code generator 4.11.2
+# Created: Wed Sep 16 14:33:01 2015
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -48,5 +48,22 @@ class Ui_inspireNLdlg(object):
 
     def retranslateUi(self, inspireNLdlg):
         inspireNLdlg.setWindowTitle(_translate("inspireNLdlg", "INSPIRE Nederland plugin voor QGIS", None))
+        self.textEdit.setHtml(_translate("inspireNLdlg", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt; font-weight:600;\">OVER</span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt; font-weight:600;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Het Nationaal Georegister (NGR) is dé centrale voorziening voor het beschrijven en ontsluiten van geo-informatie van Nederland. Het NGR bevat het overzicht van beschikbare datasets en services. Vele van deze datasets beschikken over services die u in QGIS kunt toevoegen. De bedoeling van deze plugin is om het opzoeken en toevoegen aan QGIS als te vergemakkelijken door het aan te bieden geintegreerd QGIS.</span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">De INSPIRE-implementatie in Nederland komt nu in een fase waarin het niet langer alleen maar gaat om het aanbod en om het tijdig voldoen aan de Europese wettelijke verplichtingen. Nu een toenemend aantal INSPIRE datasets en services ook daadwerkelijk beschikbaar begint te komen, wordt aandacht voor het gebruik en de toepassing ervan geleidelijk aan steeds actueler en belangrijker. </span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Daarnaast is van belang dat de INSPIRE-implementatie niet op zichzelf staat, maar plaatsvindt in een context waarin ook allerlei andere zaken en ontwikkelingen spelen, waar samenhang mee aanwezig is, afstemming mee dient plaats te vinden en waar actieve aandacht voor het opsporen en waar mogelijk benutten van synergie aan de orde is. Inmiddels zijn meer dan 350 datasets en bijbehorende services geregistreerd in het nationaal georegister geregistreerd als INSPIRE dataset of service. </span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Om het gebruik te vergemakkelijken voor de professionele GIS-gebruikers in Nederland worden voor twee meest gebruikte GIS software pakketten – te weten QGIS en ArcGIS Desktop – plugins ontwikkeld. Deze plugins maken het makkelijk om direct via het Nationaal Georegister (http://www.nationaalgeoregister.nl/) de INSPIRE datasets en services te vinden, te raadplegen en te downloaden. Deze plugin is de QGIS-versie.</span></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">Auteur: Kay Warrie (kaywarrie@gmail.com) </span></p>\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:8pt;\">In opdracht van Geonovum</span></p></body></html>", None))
 
 import resources_rc

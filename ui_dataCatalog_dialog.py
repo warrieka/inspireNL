@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Mon Sep 14 22:38:52 2015
-#      by: PyQt4 UI code generator 4.11.2
+# Created: Wed Sep 16 15:08:09 2015
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -155,17 +155,17 @@ class Ui_dataCatalogDlg(object):
         self.bronLbl.setSizePolicy(sizePolicy)
         self.bronLbl.setObjectName(_fromUtf8("bronLbl"))
         self.gridLayout.addWidget(self.bronLbl, 5, 0, 1, 1)
-        self.bronCbx = QtGui.QComboBox(self.filterWgt)
+        self.keywordCbx = QtGui.QComboBox(self.filterWgt)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.bronCbx.sizePolicy().hasHeightForWidth())
-        self.bronCbx.setSizePolicy(sizePolicy)
-        self.bronCbx.setSizeIncrement(QtCore.QSize(0, 0))
-        self.bronCbx.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
-        self.bronCbx.setFrame(True)
-        self.bronCbx.setObjectName(_fromUtf8("bronCbx"))
-        self.gridLayout.addWidget(self.bronCbx, 5, 1, 1, 1)
+        sizePolicy.setHeightForWidth(self.keywordCbx.sizePolicy().hasHeightForWidth())
+        self.keywordCbx.setSizePolicy(sizePolicy)
+        self.keywordCbx.setSizeIncrement(QtCore.QSize(0, 0))
+        self.keywordCbx.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
+        self.keywordCbx.setFrame(True)
+        self.keywordCbx.setObjectName(_fromUtf8("keywordCbx"))
+        self.gridLayout.addWidget(self.keywordCbx, 5, 1, 1, 1)
         self.typeLbl = QtGui.QLabel(self.filterWgt)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -333,7 +333,7 @@ class Ui_dataCatalogDlg(object):
         self.INSPIREannexLbl.setText(_translate("dataCatalogDlg", "INSPIRE-annex:", None))
         self.INSPIREserviceLbl.setText(_translate("dataCatalogDlg", "INSPIRE-servicetype:", None))
         self.organisatiesLbl.setText(_translate("dataCatalogDlg", "Organisatie:", None))
-        self.bronLbl.setText(_translate("dataCatalogDlg", "Bron catalogus:", None))
+        self.bronLbl.setText(_translate("dataCatalogDlg", "Steutelwoord:", None))
         self.typeLbl.setText(_translate("dataCatalogDlg", "Type:", None))
         self.label.setText(_translate("dataCatalogDlg", "Enkel resultaten met:", None))
         self.modelFilterCbx.setItemText(0, _translate("dataCatalogDlg", "Alle lagen", None))

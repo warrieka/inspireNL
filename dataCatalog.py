@@ -17,8 +17,7 @@ class dataCatalog(QtGui.QDialog):
     
         # initialize locale
         locale = QtCore.QSettings().value("locale/userLocale", "nl")
-        if not locale: locale == 'nl' 
-        else: locale = locale[0:2]
+        locale = locale[0:2]
         localePath = os.path.join(os.path.dirname(__file__), 'i18n', '{}.qm'.format(locale))
         if os.path.exists(localePath):
             self.translator = QtCore.QTranslator()
@@ -49,7 +48,6 @@ class dataCatalog(QtGui.QDialog):
         self.wcs = None
         self.dl = None
         self.zoek = ''
-        self.bronnen = None 
         #datamodel
         self.model = QtGui.QStandardItemModel(self)
         self.proxyModel = QtGui.QSortFilterProxyModel(self)
@@ -105,7 +103,7 @@ class dataCatalog(QtGui.QDialog):
                 keywords = sorted( self.md.list_suggestionKeyword() ) 
                 self.completerModel.setStringList( keywords )
                 self.bronnen = self.md.list_bronnen()
-                self.ui.bronCbx.addItems( ['']+ [ n[1] for n in self.bronnen] )
+                self.ui.keywordCbx.addItems( ['']+ keywords )
                 self.ui.typeCbx.addItems( ['']+  [ n[0] for n in self.md.dataTypes] )                
                 
                 self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
@@ -193,14 +191,15 @@ class dataCatalog(QtGui.QDialog):
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
             if dataTypes != []: dataType= dataTypes[0]
             else: dataType=''
-            siteIds = [ n[0] for n in self.bronnen if n[1] == self.ui.bronCbx.currentText() ]
-            if siteIds != []: siteId= siteIds[0]
-            else: siteId =''
+            #siteIds = [ n[0] for n in self.bronnen if n[1] == self.ui.bronCbx.currentText() ]
+            #if siteIds != []: siteId= siteIds[0]
+            #else: siteId =''
+            keyword =  self.ui.keywordCbx.currentText()
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
             inspireannex= self.ui.INSPIREannexCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
             searchResult = metadata.MDdata( self.md.searchAll(
-              self.zoek, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType))
+              self.zoek, orgName, dataType, None, inspiretheme, inspireannex, inspireServiceType, keyword))
           else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
         except:

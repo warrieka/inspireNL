@@ -236,59 +236,69 @@ class metaError(Exception):
         return repr(self.message)
    
 def getWmsLayerNames( url, proxyUrl=''):
-      if (not "request=getcapabilities" in url.lower()) or (not "service=wms" in url.lower()):
-          capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
-      else: 
-          capability = url
-          
-      if proxyUrl:
-          proxy = urllib2.ProxyHandler({'http': proxyUrl})
-          auth = urllib2.HTTPBasicAuthHandler()
-          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-          responseWMS =  opener.open(capability)
-      else:
-          responseWMS =  urllib2.urlopen(capability)
-      
-      result = ET.parse(responseWMS)
-      layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
-      layerNames=[]
+    if (not "request=getcapabilities" in url.lower()) or (not "service=wms" in url.lower()):
+        capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
+    else: 
+        capability = url
+        
+    if proxyUrl:
+        proxy = urllib2.ProxyHandler({'http': proxyUrl})
+        auth = urllib2.HTTPBasicAuthHandler()
+        opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+        responseWMS =  opener.open(capability)
+    else:
+        responseWMS =  urllib2.urlopen(capability)
+    
+    result = ET.parse(responseWMS)
+    layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
+    layerNames=[]
 
-      for lyr in layers:
-          name= lyr.find("{http://www.opengis.net/wms}Name")
-          title = lyr.find("{http://www.opengis.net/wms}Title")
-          style = lyr.find("{http://www.opengis.net/wms}Style/{http://www.opengis.net/wms}Name")
-          if ( name != None) and ( title != None ):
-             if style == None: layerNames.append(( name.text, title.text, ''))
-             else: layerNames.append(( name.text, title.text, style.text))
+    for lyr in layers:
+        name= lyr.find("{http://www.opengis.net/wms}Name")
+        title = lyr.find("{http://www.opengis.net/wms}Title")
+        style = lyr.find("{http://www.opengis.net/wms}Style/{http://www.opengis.net/wms}Name")
+        if ( name != None) and ( title != None ):
+            if style == None: layerNames.append(( name.text, title.text, ''))
+            else: layerNames.append(( name.text, title.text, style.text))
 
-      return layerNames
+    return layerNames
 
 def getWFSLayerNames( url, proxyUrl='' ):
-      if (not "request=getcapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
-          capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
-      else: 
-          capability = url
-      if proxyUrl:
-          proxy = urllib2.ProxyHandler({'http': proxyUrl})
-          auth = urllib2.HTTPBasicAuthHandler()
-          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-          responseWFS =  opener.open(capability)
-      else:
-          responseWFS =  urllib2.urlopen(capability)
-      
-      result = ET.parse(responseWFS)
-      layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
-      layerNames=[]
+    if (not "request=getcapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
+        capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
+    else: 
+        capability = url
+    if proxyUrl:
+        proxy = urllib2.ProxyHandler({'http': proxyUrl})
+        auth = urllib2.HTTPBasicAuthHandler()
+        opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
+        responseWFS =  opener.open(capability)
+    else:
+        responseWFS =  urllib2.urlopen(capability)
+    
+    result = ET.parse(responseWFS).getroot()
+    
+    serv = result.find(
+    "{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
+    if serv != None :
+       raise Exception("Deze WFS is versie %s, QGIS onsteunt alleen versie 1.0.0" % serv.text)
+    serv = result.find(
+    "{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceTypeVersion")
+    if serv != None :
+       raise Exception("Deze WFS is versie %s, QGIS onsteunt alleen versie 1.0.0" % serv.text) 
 
-      for lyr in layers:
-          name= lyr.find("{http://www.opengis.net/wfs}Name")
-          title = lyr.find("{http://www.opengis.net/wfs}Title")
-          srs = lyr.find("{http://www.opengis.net/wfs}SRS")
-          if ( name != None) and ( title != None ):
-              if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
-              else: layerNames.append(( name.text, title.text, srs.text))
+    layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
+    layerNames=[]
 
-      return layerNames
+    for lyr in layers:
+        name= lyr.find("{http://www.opengis.net/wfs}Name")
+        title = lyr.find("{http://www.opengis.net/wfs}Title")
+        srs = lyr.find("{http://www.opengis.net/wfs}SRS")
+        if ( name != None) and ( title != None ):
+            if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
+            else: layerNames.append(( name.text, title.text, srs.text))
+
+    return layerNames
 
 def getWMTSlayersNames( url, proxyUrl='' ):
     if (not "request=getcapabilities" in url.lower()) or (not "service=wmts" in url.lower()):

@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/plugins/inspireNL">
+    <file>images/inspireSearch.png</file>
     <file>images/WmsLayer.png</file>
     <file>images/tiles.png</file>
     <file>images/zip.png</file>

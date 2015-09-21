@@ -38,8 +38,7 @@ class inspireNL:
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(self.plugin_dir, 'i18n', 
-'{}.qm'.format(locale))
+        locale_path = os.path.join(self.plugin_dir, 'i18n', '{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -84,12 +83,12 @@ class inspireNL:
         return action
 
     def initGui(self):        
-        self.add_action( ':/plugins/inspireNL/images/icon.png',
-            text=self.tr(u'Nationaal Georegister'), callback=self.runCatalog, 
+        self.add_action( ':/plugins/inspireNL/images/inspireSearch.png',
+            text=self.tr(u'Zoek INSPIRE Datasets en services'), callback=self.runCatalog, 
             parent=self.iface.mainWindow())
 
-        self.add_action( ':/plugins/inspireNL/images/wrench.png',
-            text=self.tr(u'INSPIRE NL'), callback=self.runAbout, 
+        self.add_action( ':/plugins/inspireNL/images/icon.png', add_to_toolbar=False, 
+            text=self.tr(u'Over INSPIRE NL'), callback=self.runAbout, 
             parent=self.iface.mainWindow())
         
     def unload(self):

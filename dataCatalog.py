@@ -70,7 +70,6 @@ class dataCatalog(QtGui.QDialog):
         self.ui.DLbtn.clicked.connect(lambda: self.openUrl(self.dl))
         self.ui.resultView.clicked.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
-        self.ui.filterWgt.setHidden(1)
         self.finished.connect(self.clean)
 
     def _setModel(self, records):   
@@ -103,7 +102,7 @@ class dataCatalog(QtGui.QDialog):
                 keywords = sorted( self.md.list_suggestionKeyword() ) 
                 self.completerModel.setStringList( keywords )
                 self.bronnen = self.md.list_bronnen()
-                self.ui.keywordCbx.addItems( ['']+ keywords )
+                #self.ui.keywordCbx.addItems( ['']+ keywords )
                 self.ui.typeCbx.addItems( ['']+  [ n[0] for n in self.md.dataTypes] )                
                 
                 self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
@@ -194,12 +193,12 @@ class dataCatalog(QtGui.QDialog):
             #siteIds = [ n[0] for n in self.bronnen if n[1] == self.ui.bronCbx.currentText() ]
             #if siteIds != []: siteId= siteIds[0]
             #else: siteId =''
-            keyword =  self.ui.keywordCbx.currentText()
+            #keyword =  self.ui.keywordCbx.currentText()
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
             inspireannex= self.ui.INSPIREannexCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
             searchResult = metadata.MDdata( self.md.searchAll(
-              self.zoek, orgName, dataType, None, inspiretheme, inspireannex, inspireServiceType, keyword))
+              self.zoek, orgName, dataType, None, inspiretheme, inspireannex, inspireServiceType))
           else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
         except:
@@ -215,7 +214,7 @@ class dataCatalog(QtGui.QDialog):
            self.bar.pushMessage(
              QtCore.QCoreApplication.translate("datacatalog", "Waarschuwing "), 
              QtCore.QCoreApplication.translate("datacatalog", 
-                                               "Er werden geen resultaten gevonde voor deze zoekopdracht"), duration=5)
+                                     "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=5)
 
     def openUrl(self, url):
         if url: webbrowser.open_new_tab( url.encode("utf-8") )
@@ -393,6 +392,8 @@ class dataCatalog(QtGui.QDialog):
         self.ui.DLbtn.setEnabled(0)
         self.ui.addWFSbtn.setEnabled(0)
         self.ui.addWMTSbtn.setEnabled(0)
+        self.ui.addWMSbtn.setEnabled(0)
+        self.ui.addWCSbtn.setEnabled(0)
         self.ui.modelFilterCbx.setCurrentIndex(0)
         
 def internet_on(proxyUrl=None):

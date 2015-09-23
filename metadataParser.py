@@ -281,11 +281,11 @@ def getWFSLayerNames( url, proxyUrl='' ):
     serv = result.find(
     "{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
     if serv != None :
-       raise Exception("Deze WFS is versie %s, QGIS onsteunt alleen versie 1.0.0" % serv.text)
+       raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text)
     serv = result.find(
     "{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceTypeVersion")
     if serv != None :
-       raise Exception("Deze WFS is versie %s, QGIS onsteunt alleen versie 1.0.0" % serv.text) 
+       raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text) 
 
     layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
     layerNames=[]
@@ -339,7 +339,7 @@ def getWMTSlayersNames( url, proxyUrl='' ):
 
 def getWCSlayerNames( url, proxyUrl='' ):
     wcsNS = "http://www.opengis.net/wcs/1.1" 
-    
+    #get capabilities of WCS
     if (not "request=getcapabilities" in url.lower()) or (not "service=wcs" in url.lower()):
       capability = url.split("?")[0] + "?request=GetCapabilities&version=1.1.0&service=wcs"
     else: 
@@ -364,7 +364,7 @@ def getWCSlayerNames( url, proxyUrl='' ):
     for lyr in layers:
        Identifier= lyr.find("{%s}Identifier" % wcsNS)
        title = lyr.find("{http://www.opengis.net/ows/1.1}Title")
-
+        
        DescribeCoverage = url.split("?")[0] + "?request=DescribeCoverage&version=1.1.0&service=wcs&Identifiers=" + Identifier.text
        if proxyUrl:
          proxy = urllib2.ProxyHandler({'http': proxyUrl})
@@ -377,16 +377,37 @@ def getWCSlayerNames( url, proxyUrl='' ):
        resultDC = ET.parse(responseDC).getroot()
        CoverageDescription = resultDC.find( "{%s}CoverageDescription" % wcsNS)
        
+       #get data from CoverageDescription
        Identifier = CoverageDescription.find("{%s}Identifier" % wcsNS)
-
-       formats =  CoverageDescription.findall( "{%s}SupportedFormat" % wcsNS)
-       if [n.text for n in formats if 'tiff' in n.text.lower()] : 
-         format = [n.text for n in formats if 'tiff' in n.text.lower()][0]
-       elif formats: format = formats[0].text.split(";")[0]
+       formats =  [ n.text for n in 
+              CoverageDescription.findall( "{%s}SupportedFormat" % wcsNS) ]
+       srsnames = [ n.text for n in 
+              CoverageDescription.findall( "{%s}SupportedCRS" % wcsNS) ]
+       
+       #find the best SRS for the Netherlands
+       if not srsnames:
+            srsname =  "EPSG:28992"  
+       elif [n for n in srsnames if '28992' in n.upper()]:
+            srsname = [n for n in srsnames if '28992' in n][0]
+       elif [n for n in srsnames if '4326' in n.upper()]:
+            srsname =  [n for n in srsnames if '4326' in n][0]
+       else:
+            srsname = srsnames[0]
+       
+       #find the best format for QGIS
+       if [n for n in formats if 'tiff' in n.lower()] : 
+         format = [n for n in formats if 'tiff' in n.lower()][0]
+       elif formats: format = formats[0]
        else: format = "image/tiff"
        
+       #handle caris issue with inverted axis
+       if "caris" in url.lower() or "spatialfusionserver" in url.lower():
+          axis = 1
+       else :
+          axis = 0
+       
        if ( Identifier != None) and (title != None):    
-            layerNames.append(( Identifier.text, title.text, format ))
+            layerNames.append(( Identifier.text, title.text, format, srsname, axis ))
 
     return layerNames
 
@@ -413,17 +434,18 @@ def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', form
     uri = urllib.unquote( urllib.urlencode(params)  )
     return uri
 
-def makeWCSuri( url, layer,srsname="EPSG:28992", format="GeoTIFF" ):
+def makeWCSuri( url, layer, srsname="EPSG:28992", format="GEOTIFF", invertAxis=0 ):
     """ cache=PreferNetwork
         crs=EPSG:28992
         format=GeoTIFF
         identifier=dank:altr_a04_gi_bodemC
-        url=http://geodata.rivm.nl/geoserver/wcs?version%3D1.0.0%26"""
+        url=http://geodata.rivm.nl/geoserver/wcs?version%3D1.1.0%26"""
     params = {  'cache': 'PreferNetwork',
                 'format': format ,
                 'identifier': layer,
                 'crs': srsname,
-                'url': url.split('?')[0]  } #+ '?version%3D1.0.0%26'
+                'url': url.split('?')[0]  } 
+    if invertAxis: params['InvertAxisOrientation'] = 1
     
     uri = urllib.unquote( urllib.urlencode(params)  )
     return uri 

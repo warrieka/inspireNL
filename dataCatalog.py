@@ -365,11 +365,16 @@ class dataCatalog(QtGui.QDialog):
         
       layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0] 
       layerFormat  = [n[2] for n in lyrs if n[1] == layerTitle ][0] 
-      wcsUri = metadata.makeWCSuri( self.wcs, layerName, format=layerFormat )
+      srs = [n[3] for n in lyrs if n[1] == layerTitle ][0]
+      axis = [n[4] for n in lyrs if n[1] == layerTitle ][0]
+      
+      wcsUri = metadata.makeWCSuri(self.wcs, layerName, srsname=srs, invertAxis=axis )
       try:
           rlayer = QgsRasterLayer( wcsUri, layerTitle , "wcs")
           if rlayer.isValid():
               QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+              if rlayer.bandCount() > 1:
+                 rlayer.setDrawingStyle("MultiBandSingleBandGray")           
           else:  
               self.bar.pushMessage("Error", 
               QtCore.QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 

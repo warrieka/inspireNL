@@ -87,7 +87,7 @@ class inspireNL:
             text=self.tr(u'Zoek INSPIRE Datasets en services'), callback=self.runCatalog, 
             parent=self.iface.mainWindow())
 
-        self.add_action( ':/plugins/inspireNL/images/icon.png', add_to_toolbar=False, 
+        self.add_action( ':/plugins/inspireNL/images/icon.png', add_to_toolbar=True, 
             text=self.tr(u'Over INSPIRE NL'), callback=self.runAbout, 
             parent=self.iface.mainWindow())
         

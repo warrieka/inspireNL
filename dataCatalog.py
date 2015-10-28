@@ -74,8 +74,9 @@ class dataCatalog(QtGui.QDialog):
 
     def _setModel(self, records):   
         self.model.clear()
+        reclist = sorted(records, key=lambda k: k['title']) 
          
-        for rec in records:
+        for rec in reclist:
             title = QtGui.QStandardItem( rec['title'] )            #0
             wms = QtGui.QStandardItem( rec['wms'][1] )             #1
             downloadLink = QtGui.QStandardItem(rec['download'])    #2

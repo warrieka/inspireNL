@@ -11,7 +11,7 @@ name=INSPIRE Nederland plugin voor QGIS
 qgisMinimumVersion=2.8
 description=A tool to query INSPIRE datasets of the Dutch national dataportal "National Georegistry (NGR)" and add it to QGIS. - Een tool om de INSPIRE datasets uit het Nationaal Georegister te bevragen en toe te voegen aan QGIS.
 
-version=0.4
+version=1.0
 author=Kay Warrie
 email=kaywarrie@gmail.com
 

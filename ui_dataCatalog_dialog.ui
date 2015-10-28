@@ -199,7 +199,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>INSPIRE-servicetype:</string>
+            <string>Servicetype:</string>
            </property>
           </widget>
          </item>

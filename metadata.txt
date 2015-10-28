@@ -29,7 +29,7 @@ changelog=added bbox filter for WFS as wel some other minor fixes
 # Tags are comma separated with spaces allowed
 tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister
 
-homepage=https://github.com/warrieka/inspireNL
+homepage=http://pdok-ngr.readthedocs.org/nl/latest/services.html#inspire-metadata
 category=Plugins
 icon=images/icon.png
 # experimental flag

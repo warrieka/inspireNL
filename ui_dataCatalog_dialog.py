@@ -2,8 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
 #
-# Created: Wed Oct 14 14:26:48 2015
-#      by: PyQt4 UI code generator 4.11.2
+# Created by: PyQt4 UI code generator 4.11.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -69,7 +68,6 @@ class Ui_dataCatalogDlg(object):
         self.filterWgt.setSizePolicy(sizePolicy)
         self.filterWgt.setObjectName(_fromUtf8("filterWgt"))
         self.gridLayout = QtGui.QGridLayout(self.filterWgt)
-        self.gridLayout.setMargin(0)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.INSPIREthemaLbl = QtGui.QLabel(self.filterWgt)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)

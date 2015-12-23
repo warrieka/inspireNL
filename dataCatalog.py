@@ -273,15 +273,16 @@ class dataCatalog(QtGui.QDialog):
             self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
             return 
         if len(lyrs) == 0:
-            self.bar.pushMessage("WFS", 
-            QtCore.QCoreApplication.translate("datacatalog", 
+            self.bar.pushMessage("WFS", QtCore.QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wfs ), level=QgsMessageBar.WARNING, duration=10)
             return
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
         else:
-            layerTitle, accept = QtGui.QInputDialog.getItem(self, "WFS toevoegen", 
-                                "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
+            layerTitle, accept = QtGui.QInputDialog.getItem(self, 
+                 QtCore.QCoreApplication.translate("datacatalog", "WFS toevoegen"), 
+                 QtCore.QCoreApplication.translate("datacatalog", "Kies een laag om toe te voegen"),
+                 [n[1] for n in lyrs], editable=0) 
             if not accept: return
           
         layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0]
@@ -296,9 +297,12 @@ class dataCatalog(QtGui.QDialog):
         else:
             bbox = None
         
+        ###wfsUri = "WFS:{0}|{1}".format(url,layerName)
+
         wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=bbox )
         try:
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")
+            ###vlayer = QgsVectorLayer( wfsUri, layerTitle , "ogr")
             QgsMapLayerRegistry.instance().addMapLayer(vlayer)
         except: 
             self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)

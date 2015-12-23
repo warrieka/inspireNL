@@ -33,3 +33,8 @@ format=image/png
 layers=Boringen
 styles=
 url=https://www.dov.vlaanderen.be/geoserver/dov-pub/Boringen/ows?
+
+
+Fetch  WMS 2.0 through ogr2ogr
+-------
+ogr2ogr --config OGR_WFS_PAGING_ALLOWED --config OGR_WFS_PAGE_SIZE 1000 YES -f GEOJSON ProtectedSite.json "WFS:http://services.inspire-provincies.nl/ProtectedSites/services/download_PS" ps:ProtectedSite

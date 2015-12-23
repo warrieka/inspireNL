@@ -164,10 +164,9 @@ class MDReader:
             result = json.load(response)
             return result[1]
 
-    def list_organisations(self, q=''):
-        url = self.geoNetworkUrl + "/main.search.suggest?field=orgName"
-        if q:
-            url= url + "&q=" + unicode(q).encode('utf-8') 
+    def list_organisations(self):
+        url = self.geoNetworkUrl + 'q?fast=index&from=1&to=1&category=inspire&any_OR_geokeyword_OR_title_OR_keyword=&relation=within'
+
         try:
             if self.opener: response = self.opener.open(url, timeout=self.timeout)
             else: response = urllib2.urlopen(url, timeout=self.timeout)
@@ -176,14 +175,12 @@ class MDReader:
         except:
             raise metaError( str( sys.exc_info()[1] ))
         else:
-            result = json.load(response)
-            if len( result ) <= 2:
-               organisations = result[1]
-               organisations.sort()
-               return organisations
-            else:
-               return []
-               
+            result = ET.parse(response)
+            r = result.getroot()
+            organisations = [n.attrib['name'] for n in  r.findall('./summary/orgNames/orgName')]
+            organisations.sort()
+            return organisations
+            
     def list_bronnen(self):
         url = self.geoNetworkUrl + "/xml.info?type=sources"
         try:
@@ -279,11 +276,11 @@ def getWFSLayerNames( url, proxyUrl='' ):
     result = ET.parse(responseWFS).getroot()
     
     serv = result.find(
-    "{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
+         "{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
     if serv != None :
        raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text)
     serv = result.find(
-    "{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceTypeVersion")
+         "{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceTypeVersion")
     if serv != None :
        raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text) 
 

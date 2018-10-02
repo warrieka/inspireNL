@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import 
-from PyQt4.QtGui import 
+from PyQt4.QtCore import Qt, QSettings, QTranslator, QCoreApplication
+from PyQt4.QtGui import QCursor, QApplication, QDialog, QStandardItemModel, QSizePolicy, QSortFilterProxyModel, QCompleter, QStandardItem, QStringListModel, QInputDialog
 from ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import QgsMapLayerRegistry, QgsVectorLayer, QgsRasterLayer
+from qgis.core import QgsMapLayerRegistry, QgsVectorLayer, QgsRasterLayer, QRegExp
 from qgis.gui import QgsMessageBar 
-import os, json, webbrowser, sys, urllib2
+import os, webbrowser
+from sys import exc_info
+from urllib2 import ProxyHandler, HTTPBasicAuthHandler, build_opener, urlopen
 import geometryhelper as gh
 from settings import settings
 import metadataParser as metadata
 
-class dataCatalog(QtGui.QDialog):
+class dataCatalog(QDialog):
     def __init__(self, iface):
-        QtGui.QDialog.__init__(self, None)
-        self.setWindowFlags( self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint )
-        #self.setWindowFlags( self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        QDialog.__init__(self, None)
+        self.setWindowFlags( self.windowFlags() & ~Qt.WindowContextHelpButtonHint )
+        #self.setWindowFlags( self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.iface = iface
     
         # initialize locale
-        locale = QtCore.QSettings().value("locale/userLocale", "nl")
+        locale = QSettings().value("locale/userLocale", "nl")
         locale = locale[0:2]
         localePath = os.path.join(os.path.dirname(__file__), 'i18n', '{}.qm'.format(locale))
         if os.path.exists(localePath):
-            self.translator = QtCore.QTranslator()
+            self.translator = QTranslator()
             self.translator.load(localePath)
-            if QtCore.qVersion() > '4.3.3': QtCore.QCoreApplication.installTranslator(self.translator)
     
         self._initGui()
 
@@ -40,7 +40,7 @@ class dataCatalog(QtGui.QDialog):
         
         #setup a message bar
         self.bar = QgsMessageBar() 
-        self.bar.setSizePolicy( QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed )
+        self.bar.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.ui.verticalLayout.addWidget(self.bar)
         #vars
         self.firstShow = True
@@ -51,13 +51,13 @@ class dataCatalog(QtGui.QDialog):
         self.dl = None
         self.zoek = ''
         #datamodel
-        self.model = QtGui.QStandardItemModel(self)
-        self.proxyModel = QtGui.QSortFilterProxyModel(self)
+        self.model = QStandardItemModel(self)
+        self.proxyModel = QSortFilterProxyModel(self)
         self.proxyModel.setSourceModel(self.model)
         self.ui.resultView.setModel( self.proxyModel )
         #completer
-        self.completer = QtGui.QCompleter( self )
-        self.completerModel = QtGui.QStringListModel(self)
+        self.completer = QCompleter( self )
+        self.completerModel = QStringListModel(self)
         self.ui.zoekTxt.setCompleter(self.completer )
         self.completer.setModel(self.completerModel )
         
@@ -79,24 +79,24 @@ class dataCatalog(QtGui.QDialog):
         reclist = sorted(records, key=lambda k: k['title']) 
          
         for rec in reclist:
-            title = QtGui.QStandardItem( rec['title'] )            #0
-            wms = QtGui.QStandardItem( rec['wms'][1] )             #1
-            downloadLink = QtGui.QStandardItem(rec['download'])    #2
-            id = QtGui.QStandardItem( rec['uuid'] )                #3
-            abstract = QtGui.QStandardItem( rec['abstract'] )      #4
-            wfs =     QtGui.QStandardItem( rec['wfs'][1] )         #5
-            wcs =     QtGui.QStandardItem( rec['wcs'][1] )         #6
-            wmts =    QtGui.QStandardItem( rec['wmts'][1] )        #7
+            title = QStandardItem( rec['title'] )            #0
+            wms = QStandardItem( rec['wms'][1] )             #1
+            downloadLink = QStandardItem(rec['download'])    #2
+            id = QStandardItem( rec['uuid'] )                #3
+            abstract = QStandardItem( rec['abstract'] )      #4
+            wfs =      QStandardItem( rec['wfs'][1] )         #5
+            wcs =      QStandardItem( rec['wcs'][1] )         #6
+            wmts =     QStandardItem( rec['wmts'][1] )        #7
             ### 
-            wmsName = QtGui.QStandardItem( rec['wms'][0] )             #8
-            wfsName =     QtGui.QStandardItem( rec['wfs'][0] )         #9
-            wcsName =     QtGui.QStandardItem( rec['wcs'][0] )         #10
-            wmtsName =    QtGui.QStandardItem( rec['wmts'][0] )        #11
+            wmsName =  QStandardItem( rec['wms'][0] )             #8
+            wfsName =  QStandardItem( rec['wfs'][0] )         #9
+            wcsName =  QStandardItem( rec['wcs'][0] )         #10
+            wmtsName = QStandardItem( rec['wmts'][0] )        #11
             self.model.appendRow([title,wms,downloadLink,id,abstract,wfs,wcs,wmts,wmsName,wfsName,wcsName,wmtsName])
 
     #overwrite
     def show(self):
-        QtGui.QDialog.show(self)
+        QDialog.show(self)
         self.setWindowModality(0)
         if self.firstShow:
              inet = internet_on( self.s.proxyUrl )
@@ -114,8 +114,8 @@ class dataCatalog(QtGui.QDialog):
                 self.firstShow = False      
              else:
                 self.bar.pushMessage(
-                  QtCore.QCoreApplication.translate("datacatalog", "Waarschuwing "), 
-                  QtCore.QCoreApplication.translate("datacatalog", 
+                  QCoreApplication.translate("datacatalog", "Waarschuwing "), 
+                  QCoreApplication.translate("datacatalog", 
                     "Kan geen verbing maken met het internet."), level=QgsMessageBar.WARNING, duration=3)
       
     #eventhandlers
@@ -180,14 +180,14 @@ class dataCatalog(QtGui.QDialog):
     def filterModel(self, col=None):
         if col != None:
            self.proxyModel.setFilterKeyColumn(col)
-           expr = QtCore.QRegExp("?*", QtCore.Qt.CaseInsensitive, QtCore.QRegExp.Wildcard )
+           expr = QRegExp("?*", Qt.CaseInsensitive, QRegExp.Wildcard )
            self.proxyModel.setFilterRegExp(expr)
         else:
            self.proxyModel.setFilterRegExp(None)
         
     def search(self): 
         try:  
-          QtGui.QApplication.setOverrideCursor( QtGui.QCursor(QtCore.Qt.WaitCursor))
+          QApplication.setOverrideCursor( QCursor(Qt.WaitCursor))
           if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
@@ -205,18 +205,18 @@ class dataCatalog(QtGui.QDialog):
           else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
         except:
-           self.bar.pushMessage("Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=3)
+           self.bar.pushMessage("Error", str( exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=3)
            return
         finally:
-           QtGui.QApplication.restoreOverrideCursor()
+           QApplication.restoreOverrideCursor()
         
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
         self._setModel(searchResult.records)
         if searchResult.count == 0:
            self.bar.pushMessage(
-             QtCore.QCoreApplication.translate("datacatalog", "Waarschuwing "), 
-             QtCore.QCoreApplication.translate("datacatalog", 
+             QCoreApplication.translate("datacatalog", "Waarschuwing "), 
+             QCoreApplication.translate("datacatalog", 
                                      "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=5)
 
     def openUrl(self, url):
@@ -231,18 +231,18 @@ class dataCatalog(QtGui.QDialog):
         try:   
           lyrs =  metadata.getWmsLayerNames( self.wms, self.s.proxyUrl ) 
         except:
-          self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
           return 
         
         if len(lyrs) == 0:
             self.bar.pushMessage("WMS", 
-            QtCore.QCoreApplication.translate("datacatalog", 
+            QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wms ), level=QgsMessageBar.WARNING, duration=10)
             return 
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
         else:
-            layerTitle, accept = QtGui.QInputDialog.getItem(self, "WMS toevoegen", 
+            layerTitle, accept = QInputDialog.getItem(self, "WMS toevoegen", 
                                               "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
             if not accept: return
         
@@ -260,10 +260,10 @@ class dataCatalog(QtGui.QDialog):
                QgsMapLayerRegistry.instance().addMapLayer(rlayer)
             else:  
                 self.bar.pushMessage("Error", 
-                QtCore.QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
+                QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
                 level=QgsMessageBar.CRITICAL, duration=10) 
         except: 
-            self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
             return 
       
     def addWFS(self):    
@@ -272,18 +272,18 @@ class dataCatalog(QtGui.QDialog):
         try:
             lyrs =  metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
         except:
-            self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
             return 
         if len(lyrs) == 0:
-            self.bar.pushMessage("WFS", QtCore.QCoreApplication.translate("datacatalog", 
+            self.bar.pushMessage("WFS", QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wfs ), level=QgsMessageBar.WARNING, duration=10)
             return
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
         else:
-            layerTitle, accept = QtGui.QInputDialog.getItem(self, 
-                 QtCore.QCoreApplication.translate("datacatalog", "WFS toevoegen"), 
-                 QtCore.QCoreApplication.translate("datacatalog", "Kies een laag om toe te voegen"),
+            layerTitle, accept = QInputDialog.getItem(self, 
+                 QCoreApplication.translate("datacatalog", "WFS toevoegen"), 
+                 QCoreApplication.translate("datacatalog", "Kies een laag om toe te voegen"),
                  [n[1] for n in lyrs], editable=0) 
             if not accept: return
           
@@ -307,7 +307,7 @@ class dataCatalog(QtGui.QDialog):
             ###vlayer = QgsVectorLayer( wfsUri, layerTitle , "ogr")
             QgsMapLayerRegistry.instance().addMapLayer(vlayer)
         except: 
-            self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
             return 
 
     def addWMTS(self):
@@ -319,13 +319,13 @@ class dataCatalog(QtGui.QDialog):
           return 
       if len(lyrs) == 0:
           self.bar.pushMessage("WMTS", 
-          QtCore.QCoreApplication.translate("datacatalog", 
+          QCoreApplication.translate("datacatalog", 
                     "Kan geen lagen vinden in: %s" % self.wmts ), level=QgsMessageBar.WARNING, duration=10)
           return
       elif len(lyrs) == 1:
           layerTitle = lyrs[0][1]
       else:
-         layerTitle, accept = QtGui.QInputDialog.getItem(self, "WMTS toevoegen", 
+         layerTitle, accept = QInputDialog.getItem(self, "WMTS toevoegen", 
                                          "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
          if not accept: return
         
@@ -342,31 +342,31 @@ class dataCatalog(QtGui.QDialog):
               QgsMapLayerRegistry.instance().addMapLayer(rlayer)
           else:  
               self.bar.pushMessage("Error", 
-              QtCore.QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
+              QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
               level=QgsMessageBar.CRITICAL, duration=10) 
       except: 
-          self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
           return 
     
     def addWCS(self):
       try:
-          QtGui.QApplication.setOverrideCursor( QtGui.QCursor(QtCore.Qt.WaitCursor))
+          QApplication.setOverrideCursor( QCursor(Qt.WaitCursor))
           lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
       except:
-          self.bar.pushMessage( "Error", str( sys.exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
           return 
       finally:
-           QtGui.QApplication.restoreOverrideCursor()
+           QApplication.restoreOverrideCursor()
            
       if len(lyrs) == 0:
           self.bar.pushMessage("WCS", 
-          QtCore.QCoreApplication.translate("datacatalog", 
+          QCoreApplication.translate("datacatalog", 
                     "Kan geen lagen vinden in: %s" % self.wcs ), level=QgsMessageBar.WARNING, duration=10)
           return
       elif len(lyrs) == 1:
           layerTitle = lyrs[0][1]
       else:
-          layerTitle, accept = QtGui.QInputDialog.getItem(self, "WCS toevoegen", 
+          layerTitle, accept = QInputDialog.getItem(self, "WCS toevoegen", 
                               "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
           if not accept: return
         
@@ -384,10 +384,10 @@ class dataCatalog(QtGui.QDialog):
                  rlayer.setDrawingStyle("MultiBandSingleBandGray")           
           else:  
               self.bar.pushMessage("Error", 
-              QtCore.QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 
+              QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 
               level=QgsMessageBar.CRITICAL, duration=10) 
       except: 
-          self.bar.pushMessage("Error", str( sys.exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
           return       
             
     def clean(self):

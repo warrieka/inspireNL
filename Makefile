@@ -21,6 +21,9 @@
 # default is no locales
 LOCALES = nl
 
+# CONFIGURATION
+PROFILE=D:\repo\devProfile
+
 # translation
 SOURCES = \
 	__init__.py \
@@ -52,23 +55,25 @@ compile: $(UI_FILES) $(RESOURCE_FILES)
 %.py : %.ui
 	pyuic5 -o $@ $<
 
-deploy: compile transcompile
-	# The deploy  target only works on unix like operating system where
-	# the Python plugin directory is located at:
-	# $HOME/$(QGISDIR)/python/plugins
-	rm -r $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	mkdir -p $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(PY_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vf $(RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+run: deploy
+	qgis --profiles-path $(PROFILE)
+
+# The deploy  target only works on unix like operating system where
+# [KW]: use "make runplugin" instead on windows
+deploy: derase compile
+	mkdir $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+	cp -vfr $(PY_FILES) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+	cp -vf $(UI_FILES) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+	cp -vf $(RESOURCE_FILES) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+	cp -vfr $(EXTRAS) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+	cp -vfr i18n $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
+
 
 # The dclean target removes compiled python files from plugin directory
 # also deletes any .git entry
 dclean:
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname "*.pyc" -delete
-	find $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
+	find $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME) -iname "*.pyc" -delete
+	find $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME) -iname ".git" -prune -exec rm -Rf {} \;
 
 
 derase:
@@ -78,7 +83,7 @@ zip: deploy dclean
 	# The zip target deploys the plugin and creates a zip file with the deployed
 	# content. You can then upload the zip file on http://plugins.qgis.org
 	rm -f $(PLUGINNAME).zip
-	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
+	cd $(PROFILE)\profiles\default\python\plugins; zip -9r $(CURDIR)\$(PLUGINNAME).zip $(PLUGINNAME)
 
 package: compile
 	# Create a zip package of the plugin named $(PLUGINNAME).zip.
@@ -89,9 +94,6 @@ package: compile
 	rm -f $(PLUGINNAME).zip
 	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip $(VERSION)
 	echo "Created package: $(PLUGINNAME).zip"
-
-upload: zip
-	$(PLUGIN_UPLOAD) $(PLUGINNAME).zip
 
 transup:
 	@chmod +x scripts/update-strings.sh

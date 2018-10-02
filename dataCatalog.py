@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import 
+from PyQt4.QtGui import 
 from ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import *
+from qgis.core import QgsMapLayerRegistry, QgsVectorLayer, QgsRasterLayer
 from qgis.gui import QgsMessageBar 
 import os, json, webbrowser, sys, urllib2
 import geometryhelper as gh

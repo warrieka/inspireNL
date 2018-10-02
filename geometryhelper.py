@@ -1,29 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-/***************************************************************************
-geometryHelper
-                                A QGIS plugin
-"Tool om geopunt in QGIS te gebruiken"
-                            -------------------
-        begin                : 2013-12-05
-        copyright            : (C) 2013 by Kay Warrie
-        email                : kaywarrie@gmail.com
-***************************************************************************/
-
-/***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************/
-"""
-from PyQt4.QtCore import *
-from qgis.core import *
+from qgis.core import QgsPoint, QgsCoordinateTransform, QgsCoordinateReferenceSystem, QgsGeometry, QgsRectangle, QgsField, QgsMapLayerRegistry, QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsPalLayerSettings
+from PyQt4.QtCore import QVariant
 from PyQt4.QtGui import QFileDialog, QColor
 from qgis.gui import QgsVertexMarker
-import os
+from os.path import splitext
 
 class geometryHelper:
     def __init__(self , iface ):
@@ -33,9 +13,7 @@ class geometryHelper:
     
     @staticmethod
     def getGetMapCrs(iface):
-        new24 = QGis.QGIS_VERSION_INT >= 20400
-        return ( iface.mapCanvas().mapSettings().destinationCrs() if new24
-                 else  iface.mapCanvas().mapRenderer().destinationCrs() )
+        return iface.mapCanvas().mapRenderer().destinationCrs()
         
     def prjPtToMapCrs( self, xy , fromCRS=4326 ):
         point = QgsPoint( xy[0], xy[1] )
@@ -179,7 +157,7 @@ class geometryHelper:
         Fdlg.setFileMode(QFileDialog.AnyFile)
         fName = QFileDialog.getSaveFileName(sender, "open file", filter=filter, directory=startFolder)
         if fName:
-          ext = os.path.splitext( fName )[1]
+          ext = splitext( fName )[1]
           if "SHP" in ext.upper():
             flType = "ESRI Shapefile"
           elif "SQLITE" in ext.upper():

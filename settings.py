@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from PyQt4.QtCore import QSettings
+from qgis.PyQt.QtCore import QSettings
 from qgis.core import QgsNetworkAccessManager
-from urllib import getproxies
+import urllib.request
 
 
-class settings:
+class settings(object):
     def __init__(self):
         self.s = QSettings()
         
@@ -24,7 +24,7 @@ class settings:
             self.proxyPassword = self.s.value("proxy/proxyPassword", "" )
 
             if self.proxy_type == "DefaultProxy": 
-               proxies = getproxies()
+               proxies = urllib.request.getproxies()
                if len(proxies) == 0:
                   qgsNetMan = QgsNetworkAccessManager.instance() 
                   proxy = qgsNetMan.proxy().applicationProxy() 

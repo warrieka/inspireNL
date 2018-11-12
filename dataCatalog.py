@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
-from PyQt4.QtCore import Qt, QSettings, QTranslator, QCoreApplication
-from PyQt4.QtGui import QCursor, QApplication, QDialog, QStandardItemModel, QSizePolicy, QSortFilterProxyModel, QCompleter, QStandardItem, QStringListModel, QInputDialog
-from ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import QgsMapLayerRegistry, QgsVectorLayer, QgsRasterLayer, QRegExp
+#from __future__ import absolute_import
+from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog
+from qgis.PyQt.QtCore import QSortFilterProxyModel, QRegExp, QStringListModel
+from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis
 from qgis.gui import QgsMessageBar 
-import os, webbrowser
-from sys import exc_info
-from urllib2 import ProxyHandler, HTTPBasicAuthHandler, build_opener, urlopen
-import geometryhelper as gh
-from settings import settings
-import metadataParser as metadata
+import sys, os, webbrowser
+from . import geometryhelper as gh
+from .settings import settings
+from . import metadataParser as metadata
+from .metadataParser import MDReader, MDdata, getWmsLayerNames, getWFSLayerNames, makeWFSuri, getWMTSlayersNames, makeWMTSuri,  getWCSlayerNames, makeWCSuri
 
 class dataCatalog(QDialog):
     def __init__(self, iface):
@@ -79,16 +81,16 @@ class dataCatalog(QDialog):
         reclist = sorted(records, key=lambda k: k['title']) 
          
         for rec in reclist:
-            title = QStandardItem( rec['title'] )            #0
-            wms = QStandardItem( rec['wms'][1] )             #1
-            downloadLink = QStandardItem(rec['download'])    #2
-            id = QStandardItem( rec['uuid'] )                #3
-            abstract = QStandardItem( rec['abstract'] )      #4
+            title = QStandardItem( rec['title'] )             #0
+            wms = QStandardItem( rec['wms'][1] )              #1
+            downloadLink = QStandardItem(rec['download'])     #2
+            id = QStandardItem( rec['uuid'] )                 #3
+            abstract = QStandardItem( rec['abstract'] )       #4
             wfs =      QStandardItem( rec['wfs'][1] )         #5
             wcs =      QStandardItem( rec['wcs'][1] )         #6
             wmts =     QStandardItem( rec['wmts'][1] )        #7
             ### 
-            wmsName =  QStandardItem( rec['wms'][0] )             #8
+            wmsName =  QStandardItem( rec['wms'][0] )         #8
             wfsName =  QStandardItem( rec['wfs'][0] )         #9
             wcsName =  QStandardItem( rec['wcs'][0] )         #10
             wmtsName = QStandardItem( rec['wmts'][0] )        #11
@@ -99,24 +101,17 @@ class dataCatalog(QDialog):
         QDialog.show(self)
         self.setWindowModality(0)
         if self.firstShow:
-             inet = internet_on( self.s.proxyUrl )
-             if inet:
-                self.ui.organisatiesCbx.addItems( ['']+ self.md.list_organisations() )
-                keywords = sorted( self.md.list_suggestionKeyword() ) 
-                self.completerModel.setStringList( keywords )
-                self.bronnen = self.md.list_bronnen()
-                #self.ui.keywordCbx.addItems( ['']+ keywords )
-                self.ui.typeCbx.addItems( ['']+  [ n[0] for n in self.md.dataTypes] )                
-                
-                self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
-                self.ui.INSPIREserviceCbx.addItems( ['']+ self.md.inspireServiceTypes )
-                self.ui.INSPIREthemaCbx.addItems( ['']+ self.md.list_inspire_theme() )
-                self.firstShow = False      
-             else:
-                self.bar.pushMessage(
-                  QCoreApplication.translate("datacatalog", "Waarschuwing "), 
-                  QCoreApplication.translate("datacatalog", 
-                    "Kan geen verbing maken met het internet."), level=QgsMessageBar.WARNING, duration=3)
+            self.ui.organisatiesCbx.addItems( ['']+ self.md.list_organisations() )
+            keywords = sorted( self.md.list_suggestionKeyword() ) 
+            self.completerModel.setStringList( keywords )
+            self.bronnen = self.md.list_bronnen()
+            #self.ui.keywordCbx.addItems( ['']+ keywords )
+            self.ui.typeCbx.addItems( ['']+  [ n[0] for n in self.md.dataTypes] )                
+            
+            self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
+            self.ui.INSPIREserviceCbx.addItems( ['']+ self.md.inspireServiceTypes )
+            self.ui.INSPIREthemaCbx.addItems( ['']+ self.md.list_inspire_theme() )
+            self.firstShow = False      
       
     #eventhandlers
     def resultViewClicked(self):
@@ -193,10 +188,6 @@ class dataCatalog(QDialog):
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
             if dataTypes != []: dataType= dataTypes[0]
             else: dataType=''
-            #siteIds = [ n[0] for n in self.bronnen if n[1] == self.ui.bronCbx.currentText() ]
-            #if siteIds != []: siteId= siteIds[0]
-            #else: siteId =''
-            #keyword =  self.ui.keywordCbx.currentText()
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
             inspireannex= self.ui.INSPIREannexCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
@@ -205,7 +196,7 @@ class dataCatalog(QDialog):
           else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
         except:
-           self.bar.pushMessage("Error", str( exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=3)
+           self.bar.pushMessage("Error", str( sys.exc_info()[1]), level=Qgis.Critical , duration=3)
            return
         finally:
            QApplication.restoreOverrideCursor()
@@ -231,13 +222,13 @@ class dataCatalog(QDialog):
         try:   
           lyrs =  metadata.getWmsLayerNames( self.wms, self.s.proxyUrl ) 
         except:
-          self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage( "Error", str(sys.exc_info()[1]), level=Qgis.Critical , duration=10)
           return 
         
         if len(lyrs) == 0:
             self.bar.pushMessage("WMS", 
             QCoreApplication.translate("datacatalog", 
-                      "Kan geen lagen vinden in: %s" % self.wms ), level=QgsMessageBar.WARNING, duration=10)
+                      "Kan geen lagen vinden in: %s" % self.wms ), level=Qgis.Warning, duration=10)
             return 
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
@@ -257,13 +248,13 @@ class dataCatalog(QDialog):
         try:
             rlayer = QgsRasterLayer(wmsUrl, layerTitle, 'wms') 
             if rlayer.isValid():
-               QgsMapLayerRegistry.instance().addMapLayer(rlayer)
+               QgsProject.instance().addMapLayer(rlayer)
             else:  
                 self.bar.pushMessage("Error", 
                 QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
-                level=QgsMessageBar.CRITICAL, duration=10) 
+                level=Qgis.Critical , duration=10) 
         except: 
-            self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
             return 
       
     def addWFS(self):    
@@ -272,11 +263,11 @@ class dataCatalog(QDialog):
         try:
             lyrs =  metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
         except:
-            self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage( "Error", str(sys.exc_info()[1]), level=Qgis.Critical , duration=10)
             return 
         if len(lyrs) == 0:
             self.bar.pushMessage("WFS", QCoreApplication.translate("datacatalog", 
-                      "Kan geen lagen vinden in: %s" % self.wfs ), level=QgsMessageBar.WARNING, duration=10)
+                      "Kan geen lagen vinden in: %s" % self.wfs ), level=Qgis.Warning, duration=10)
             return
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
@@ -291,23 +282,12 @@ class dataCatalog(QDialog):
         crs = [n[2] for n in lyrs if n[1] == layerTitle ][0]
         url =  self.wfs.split('?')[0]
                 
-        if self.ui.wfsBboxchk.isChecked():
-            extent = self.iface.mapCanvas().extent()
-            minX, minY = self.gh.prjPtFromMapCrs([extent.xMinimum(),extent.yMinimum()], int(crs.split(":")[-1]) )
-            maxX, maxY = self.gh.prjPtFromMapCrs([extent.xMaximum(),extent.yMaximum()], int(crs.split(":")[-1]) )
-            bbox = [minX, minY, maxX, maxY]
-        else:
-            bbox = None
-        
-        ###wfsUri = "WFS:{0}|{1}".format(url,layerName)
-
-        wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=bbox )
+        wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=None )
         try:
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")
-            ###vlayer = QgsVectorLayer( wfsUri, layerTitle , "ogr")
-            QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+            QgsProject.instance().addMapLayer(vlayer)
         except: 
-            self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
+            self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
             return 
 
     def addWMTS(self):
@@ -315,18 +295,18 @@ class dataCatalog(QDialog):
       try:
           lyrs =  metadata.getWMTSlayersNames( self.wmts, self.s.proxyUrl )
       except:
-          self.bar.pushMessage("Error",'Kan niet connecteren met '+ self.wmts, level=QgsMessageBar.CRITICAL, duration=10)
+          self.bar.pushMessage("Error",'Kan niet connecteren met '+ self.wmts, level=Qgis.Critical , duration=10)
           return 
       if len(lyrs) == 0:
           self.bar.pushMessage("WMTS", 
           QCoreApplication.translate("datacatalog", 
-                    "Kan geen lagen vinden in: %s" % self.wmts ), level=QgsMessageBar.WARNING, duration=10)
+                    "Kan geen lagen vinden in: %s" % self.wmts ), level=Qgis.Warning, duration=10)
           return
       elif len(lyrs) == 1:
           layerTitle = lyrs[0][1]
       else:
          layerTitle, accept = QInputDialog.getItem(self, "WMTS toevoegen", 
-                                         "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
+                                    "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
          if not accept: return
         
       layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0]
@@ -335,33 +315,22 @@ class dataCatalog(QDialog):
       srs = [n[4] for n in lyrs if n[1] == layerTitle ][0]
       
       wmtsUrl= metadata.makeWMTSuri(self.wmts , layerName, matrix, format=frmt, srsname=srs)
-  
-      try:
-          rlayer = QgsRasterLayer(wmtsUrl, layerTitle, 'wms') 
-          if rlayer.isValid():
-              QgsMapLayerRegistry.instance().addMapLayer(rlayer)
-          else:  
-              self.bar.pushMessage("Error", 
-              QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
-              level=QgsMessageBar.CRITICAL, duration=10) 
-      except: 
-          self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
-          return 
+
+      rlayer = QgsRasterLayer(wmtsUrl, layerTitle, 'wms') 
+      if rlayer.isValid():
+         QgsProject.instance().addMapLayer(rlayer)
+      else:  
+         self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
+               level=Qgis.Critical , duration=10) 
+
     
     def addWCS(self):
-      try:
-          QApplication.setOverrideCursor( QCursor(Qt.WaitCursor))
-          lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
-      except:
-          self.bar.pushMessage( "Error", str(exc_info()[1]), level=QgsMessageBar.CRITICAL, duration=10)
-          return 
-      finally:
-           QApplication.restoreOverrideCursor()
-           
+      lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
+         
       if len(lyrs) == 0:
           self.bar.pushMessage("WCS", 
           QCoreApplication.translate("datacatalog", 
-                    "Kan geen lagen vinden in: %s" % self.wcs ), level=QgsMessageBar.WARNING, duration=10)
+                    "Kan geen lagen vinden in: %s" % self.wcs ), level=Qgis.Warning, duration=10)
           return
       elif len(lyrs) == 1:
           layerTitle = lyrs[0][1]
@@ -371,24 +340,18 @@ class dataCatalog(QDialog):
           if not accept: return
         
       layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0] 
-      layerFormat  = [n[2] for n in lyrs if n[1] == layerTitle ][0] 
-      srs = [n[3] for n in lyrs if n[1] == layerTitle ][0]
-      axis = [n[4] for n in lyrs if n[1] == layerTitle ][0]
-      
-      wcsUri = metadata.makeWCSuri(self.wcs, layerName, srsname=srs, invertAxis=axis )
-      try:
-          rlayer = QgsRasterLayer( wcsUri, layerTitle , "wcs")
-          if rlayer.isValid():
-              QgsMapLayerRegistry.instance().addMapLayer(rlayer)
-              if rlayer.bandCount() > 1:
-                 rlayer.setDrawingStyle("MultiBandSingleBandGray")           
-          else:  
-              self.bar.pushMessage("Error", 
-              QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 
-              level=QgsMessageBar.CRITICAL, duration=10) 
-      except: 
-          self.bar.pushMessage("Error", str(exc_info()[1] ), level=QgsMessageBar.CRITICAL, duration=10)
-          return       
+
+      wcsUri = metadata.makeWCSuri(self.wcs, layerName )  #srsname=srs, invertAxis=axis
+
+      QApplication.setOverrideCursor( QCursor(Qt.WaitCursor)) 
+      rlayer = QgsRasterLayer( wcsUri, layerTitle , "wcs")
+
+      if rlayer.isValid():
+          QgsProject.instance().addMapLayer(rlayer)        
+      else:  
+          self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WCS niet laden"), 
+          level=Qgis.Critical , duration=10) 
+      QApplication.restoreOverrideCursor()
             
     def clean(self):
         self.model.clear()
@@ -398,9 +361,9 @@ class dataCatalog(QDialog):
         self.wmts = None
         self.wcs = None
         self.ui.zoekTxt.setCurrentIndex(0)
-        self.ui.descriptionText.setText('')
-        self.ui.countLbl.setText( "")
-        self.ui.msgLbl.setText("" )
+        self.ui.descriptionText.setText("")
+        self.ui.countLbl.setText("")
+        self.ui.msgLbl.setText("")
         self.ui.DLbtn.setEnabled(0)
         self.ui.addWFSbtn.setEnabled(0)
         self.ui.addWMTSbtn.setEnabled(0)
@@ -408,15 +371,4 @@ class dataCatalog(QDialog):
         self.ui.addWCSbtn.setEnabled(0)
         self.ui.modelFilterCbx.setCurrentIndex(0)
         
-def internet_on(proxyUrl=None):
-    try:
-        if proxyUrl:
-          proxy = urllib2.ProxyHandler({'http': proxyUrl})
-          auth = urllib2.HTTPBasicAuthHandler()
-          opener = urllib2.build_opener(proxy, auth, urllib2.HTTPHandler)
-          responseWFS = opener.open("https://www.google.be/", timeout=5)
-        else: 
-          responseWFS =  urllib2.urlopen("https://www.google.be/", timeout=5)
-        return True
-    except urllib2.URLError as err: pass
-    return False
+

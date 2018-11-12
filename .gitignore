@@ -2,8 +2,6 @@ docs/*.pdf
 docs/*.docx
 docs/*.doc
 
-ui_*.py
-
 ###############
 ## Kdevelop  ##
 ###############

@@ -22,7 +22,7 @@
 LOCALES = nl
 
 # CONFIGURATION
-PROFILE=D:\repo\devProfile
+PROFILE=E:\work\devProfile
 
 # translation
 SOURCES = \
@@ -53,7 +53,7 @@ compile: $(UI_FILES) $(RESOURCE_FILES)
 	pyrcc5 -o $*_rc.py  $<
 
 %.py : %.ui
-	pyuic5 -o $@ $<
+	pyuic5  --import-from=. -o $@ $<
 
 run: deploy
 	qgis --profiles-path $(PROFILE)
@@ -61,6 +61,7 @@ run: deploy
 # The deploy  target only works on unix like operating system where
 # [KW]: use "make runplugin" instead on windows
 deploy: derase compile
+	rm -rf $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME) 
 	mkdir $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
 	cp -vfr $(PY_FILES) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)
 	cp -vf $(UI_FILES) $(PROFILE)\profiles\default\python\plugins\$(PLUGINNAME)

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import os
-from PyQt4.QtCore import Qt, QSettings, QTranslator, QTranslator
-from PyQt4.QtGui import QDialog 
-from ui_inspireNL_dialog import Ui_inspireNLdlg
+from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QTranslator
+from qgis.PyQt.QtWidgets import QDialog 
+from .ui_inspireNL_dialog import Ui_inspireNLdlg
 
 class inspireNLabout(QDialog):
     def __init__(self, parent=None):

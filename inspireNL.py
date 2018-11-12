@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt4.QtGui import QAction, QIcon
-# Initialize Qt resources from file resources.py
-import resources_rc as resources
+from __future__ import absolute_import
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtGui import QIcon
+
 # Import the code for the dialog
-from inspireNLabout import inspireNLabout
-from dataCatalog import dataCatalog
-import os.path, sys
+from .inspireNLabout import inspireNLabout
+from .dataCatalog import dataCatalog
+import os.path
 
 
-class inspireNL:
+class inspireNL(object):
     def __init__(self, iface):
         self.iface = iface
         # initialize plugin directory

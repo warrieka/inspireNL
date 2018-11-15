@@ -104,11 +104,10 @@ class dataCatalog(QDialog):
             self.ui.organisatiesCbx.addItems( ['']+ self.md.list_organisations() )
             keywords = sorted( self.md.list_suggestionKeyword() ) 
             self.completerModel.setStringList( keywords )
-            self.bronnen = self.md.list_bronnen()
-            #self.ui.keywordCbx.addItems( ['']+ keywords )
+            #self.bronnen = self.md.list_bronnen()
             self.ui.typeCbx.addItems( ['']+  [ n[0] for n in self.md.dataTypes] )                
             
-            self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
+            #self.ui.INSPIREannexCbx.addItems( ['']+ self.md.inspireannex )
             self.ui.INSPIREserviceCbx.addItems( ['']+ self.md.inspireServiceTypes )
             self.ui.INSPIREthemaCbx.addItems( ['']+ self.md.list_inspire_theme() )
             self.firstShow = False      
@@ -181,34 +180,24 @@ class dataCatalog(QDialog):
            self.proxyModel.setFilterRegExp(None)
         
     def search(self): 
-        try:  
-          QApplication.setOverrideCursor( QCursor(Qt.WaitCursor))
-          if self.ui.filterBox.isChecked():
+        if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
             if dataTypes != []: dataType= dataTypes[0]
             else: dataType=''
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
-            inspireannex= self.ui.INSPIREannexCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
-            searchResult = metadata.MDdata( self.md.searchAll(
-              self.zoek, orgName, dataType, None, inspiretheme, inspireannex, inspireServiceType))
-          else:
-            searchResult = metadata.MDdata( self.md.searchAll( self.zoek ))
-        except:
-           self.bar.pushMessage("Error", str( sys.exc_info()[1]), level=Qgis.Critical , duration=3)
-           return
-        finally:
-           QApplication.restoreOverrideCursor()
+            searchResult = metadata.MDdata( 
+                self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType),  proxyUrl=self.s.proxyUrl)
+        else:
+            searchResult = metadata.MDdata( self.md.searchAll( self.zoek ), proxyUrl=self.s.proxyUrl )
         
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
         self._setModel(searchResult.records)
         if searchResult.count == 0:
-           self.bar.pushMessage(
-             QCoreApplication.translate("datacatalog", "Waarschuwing "), 
-             QCoreApplication.translate("datacatalog", 
-                                     "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=5)
+           self.bar.pushMessage( QCoreApplication.translate("datacatalog", "Waarschuwing "), 
+             QCoreApplication.translate("datacatalog", "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
 
     def openUrl(self, url):
         if url: webbrowser.open_new_tab( url.encode("utf-8") )
@@ -226,9 +215,8 @@ class dataCatalog(QDialog):
           return 
         
         if len(lyrs) == 0:
-            self.bar.pushMessage("WMS", 
-            QCoreApplication.translate("datacatalog", 
-                      "Kan geen lagen vinden in: %s" % self.wms ), level=Qgis.Warning, duration=10)
+            self.bar.pushMessage("WMS", QCoreApplication.translate("datacatalog",
+            "Kan geen lagen vinden in: %s" % self.wms + "?service=WMS&request=Getcapabilities&version=1.3.0" ), level=Qgis.Warning, duration=10)
             return 
         elif len(lyrs) == 1:
             layerTitle = lyrs[0][1]
@@ -250,9 +238,8 @@ class dataCatalog(QDialog):
             if rlayer.isValid():
                QgsProject.instance().addMapLayer(rlayer)
             else:  
-                self.bar.pushMessage("Error", 
-                QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
-                level=Qgis.Critical , duration=10) 
+                self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
+                                    level=Qgis.Critical , duration=10) 
         except: 
             self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
             return 

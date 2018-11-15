@@ -5,91 +5,84 @@ import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime
 import xml.etree.ElementTree as ET
 
 class MDdata(object):
-    def __init__(self, metadataXML): 
-        self.start = int( metadataXML.attrib["from"] )
-        self.to =    int( metadataXML.attrib["to"] )
-        self.count = int( metadataXML[0].attrib["count"] )
+    def __init__(self, metadataXML, proxyUrl=None, timeout=5):
+        self._proxy = proxyUrl
+        self._timeout = timeout
+        self.count = 0 if not metadataXML else int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         self.records = []
+
+        if not metadataXML: return
         
-        mds = metadataXML.findall("metadata")
+        mds = metadataXML.findall("{http://www.opengis.net/cat/csw/2.0.2}Record")
         for md in mds:
            record = {}
-                      
-           geonet =  md.find('{http://www.fao.org/geonetwork}info')
-           if geonet.find('uuid').text != None: 
-              record['uuid'] = geonet.find('uuid').text
+           if md.find("{http://purl.org/dc/elements/1.1/}identifier") == None or not md.find("{http://purl.org/dc/elements/1.1/}identifier").text: 
+               continue 
+           record['uuid'] = md.find("{http://purl.org/dc/elements/1.1/}identifier").text
+           record['title'] = md.find('{http://purl.org/dc/elements/1.1/}title').text
+
+           description = md.find('{http://purl.org/dc/elements/1.1/}description')
+           if (description != None):
+              record['abstract'] = description.text if description.text != None else ''
+
+           bbox = md.find('{http://www.opengis.net/ows}BoundingBox')
+           if (bbox != None): 
+               LowerCorner = md.find('{http://www.opengis.net/ows}LowerCorner')
+               UpperCorner = md.find('{http://www.opengis.net/ows}UpperCorner')
+               if LowerCorner and UpperCorner: 
+                   record['geoBox'] = [float(n) for n in LowerCorner.text.split(" ")] + [float(n) for n in UpperCorner.text.split(" ")]
+               else:
+                   record['geoBox'] = [3.1, 50.6, 7.4, 53.6]
            else: 
-              continue  #records with no id are just wrong
-              
-           if (md.find('title') != None) and (md.find('title').text != None):
-              record['title'] = md.find('title').text
-           else: 
-              record['title'] = ''
-             
-           if (md.find('abstract') != None) and (md.find('abstract').text != None):
-              record['abstract'] = md.find('abstract').text
-           else: 
-              record['abstract'] = ''
+               record['geoBox'] = [3.1, 50.6, 7.4, 53.6]
            
-           if (md.find('geoBox') != None) and (md.find('geoBox').text != None): 
-               try:
-                   record['geoBox'] = [float(i) for i in md.find('geoBox').text.split('|') ]
-               except:
-                   record['geoBox'] = ""
-           else: 
-              record['geoBox'] = ""
-           
-           record['wms'] = self._findWMS( md )
-           record['wfs'] = self._findWFS( md )
-           record['wcs'] = self._findWCS( md )
-           record['wmts'] = self._findWMTS( md )
-           record['download'] = self._findDownload( md )
+           record['wms'] = self._findWXS( md, "OGC:WFS" )
+           record['wfs'] = self._findWXS( md, "OGC:WFS" )
+           record['wcs'] = self._findWXS( md, "OGC:WCS" )
+           record['wmts'] = self._findWXS( md , "OGC:WMTS")
+           record['download'] = self._findDownloads( md )
            
            self.records.append(record)
            
-    def _findWFS(self , node ):
-        links =  "|".join( [ n.text for n in node.findall("link") ] )
-        links = links.split('|') 
-        for n in range(1, len( links )):
-            if "OGC:WFS" in links[n].upper(): 
-              if "http" in  links[n - 1]:
-                  return ( links[n - 2], links[n - 1])
-        return ("","")
-      
-    def _findWMS(self , node ):
-        links =  "|".join( [ n.text for n in node.findall("link") ] )
-        links = links.split('|') 
-        for n in range(2, len( links )):
-            if "OGC:WMS" in links[n].upper(): 
-              if "http" in  links[n - 1]: 
-                  return ( links[n - 2], links[n - 1])
-        return ("","")
-      
-    def _findWMTS(self , node ):
-        links =  "|".join( [ n.text for n in node.findall("link") ] )
-        links = links.split('|') 
-        for n in range(2, len( links )):
-            if "OGC:WMTS" in links[n].upper(): 
-              if "http" in  links[n - 1]: 
-                return ( links[n - 2], links[n - 1])
+    def _findWXS(self , node, protocol= "OGC:WFS" ):
+        links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+                            if "protocol" in n.attrib and n.attrib["protocol"] == protocol] 
+
+        if len(links) > 0: 
+            name = links[0].attrib["name"] if "name" in links[0].attrib else links[0].text
+            return (name, links[0].text)
         return ("","")
 
-    def _findWCS(self , node ):
-        links =  "|".join( [ n.text for n in node.findall("link") ] )
-        links = links.split('|') 
-        for n in range(2, len( links )):
-            if "OGC:WCS" in links[n].upper(): 
-              if "http" in  links[n - 1]: #some wms are stored with relative path's, ignore those
-                return ( links[n - 2], links[n - 1])
-        return ("","")
-
-    def _findDownload(self , node):
-        links =  "|".join( [ n.text for n in node.findall("link") ] )
-        links = links.split('|') 
-        for n in range(2, len( links )):
-            if "DOWNLOAD" in links[n].upper(): 
-               if "http" in  links[n - 1]: #some files are stored with relative path's, ignore those
-                  return links[n - 1]
+    def _findDownloads(self , node):
+        links = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+                                if "protocol" in n.attrib and "DOWNLOAD" in n.attrib["protocol"].upper() ] 
+        if len(links) > 0: return links[0]
+    
+        links = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+                                if "protocol" in n.attrib and n.attrib["protocol"] == "INSPIRE Atom"] 
+        if len(links) == 0: 
+            return ""
+        
+        link = links[0]
+        
+        result = []
+        try:    
+            if self._proxy:
+                proxy = urllib.request.ProxyHandler({'http': self._proxy})
+                auth = urllib.request.HTTPBasicAuthHandler()
+                opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
+                response =  opener.open(link, timeout=self)
+            else:
+                response =  urllib.request.urlopen(link, timeout=self)   
+        except:
+            return ""
+        
+        root = ET.parse(response).getroot()
+        entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
+        for entry in entries:
+            dl = entry.find( "{http://www.w3.org/2005/Atom}link")
+            if dl and "href" in dl.attrib: 
+                return dl.attrib["href"]
         return ""
 
 
@@ -98,10 +91,8 @@ class MDReader(object):
         self.timeout = timeout
         self.geoNetworkUrl = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/" 
 
-        self.dataTypes = [["Dataset", "dataset"],["Datasetserie","series"],
-                          ["Objectencatalogus","model"],["Service","service"]]
-        self.inspireServiceTypes =  ["Discovery","Transformation","View", "Download","Other","Invoke"]
-        self.inspireannex =  ["i","ii","iii"]
+        self.dataTypes = [["Dataset", "dataset"],["Service","service"]]
+        self.inspireServiceTypes = ["discovery","download","view","other"]
         
         self.opener = None
         if proxyUrl:
@@ -109,65 +100,54 @@ class MDReader(object):
              auth = urllib.request.HTTPBasicAuthHandler()
              self.opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
         
-    def _createFindUrl(self, q="", start=1, to=20, orgName='', dataType='', siteId='',
-                       inspiretheme='', inspireannex='', inspireServiceType='', keyword=""):
-        geopuntUrl = self.geoNetworkUrl + "/q?fast=index&"
-        data = {}
-        data["category"] = "inspire"   #REMARK: NL specifik
-        data["any"] = "*" + q + "*"
-        data["to"] = to
-        data["from"] = start
-        data["orgName"] =   orgName 
-        data["keyword"] =   keyword 
-                
-        if dataType: data['type']= dataType
-        if siteId: data['siteId']= siteId                
-                
-        if inspiretheme: 
-            data["inspiretheme"] = inspiretheme            
-        if inspireannex and (inspireannex.lower() in self.inspireannex ) : 
-            data["inspireannex"] = inspireannex.lower()
-        if inspireServiceType : 
-            data["serviceType"] = inspireServiceType.lower() 
-
-        values = urllib.parse.urlencode(data)
-        result = geopuntUrl + values
-        return result
-          
-    def list_inspire_theme(self, q=''):
-        url = self.geoNetworkUrl + "/xml.search.keywords?pNewSearch=true&pTypeSearch=1&pThesauri=external.theme.inspire-theme&pKeyword=*" + q +"*"
-        try:
-            if self.opener: response = self.opener.open(url, timeout=self.timeout)
-            else: response = urllib.request.urlopen(url, timeout=self.timeout)
-        except  (urllib.error.HTTPError, urllib.error.URLError) as e:
-            raise metaError( str( e.reason ))
-        except:
-            raise metaError( str( sys.exc_info()[1] ))
-        else:
-            result = ET.parse(response)
-            r= result.getroot()
-            themes = [ n.find("value").text for n in  r[0].findall('keyword') ]
-            themes.sort()
-            return themes
-    
-    def list_suggestionKeyword(self, q=''):
-        url = self.geoNetworkUrl + "/main.search.suggest?field=keyword"
-        if q:
-            url= url + "&q=" + q
+    def _createFindUrl(self, q="", start=1, maxRecords=100, orgName='', dataType='', inspiretheme='', inspireServiceType=''): 
+        url = self.geoNetworkUrl + "inspire?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
         
+        data = {}
+        #TODO: make CQL query
+        CQL = "AnyText = '" + q + "'"
+        data["constraint"] = CQL
+        data["maxRecords"] = maxRecords
+        data["startPosition"] = start
+                
+        values = urllib.parse.urlencode(data)
+        return url + values
+          
+    def list_inspire_theme(self):
+        return [ "Administratieve eenheden", "Adressen", "Atmosferische omstandigheden", "Beschermde gebieden",
+            "Biogeografische gebieden", "Bodem", "Bodemgebruik", "Energiebronnen", "Faciliteiten voor landbouw en aquacultuur",
+            "Faciliteiten voor productie en industrie", "Gebieden met natuurrisico's",
+            "Gebiedsbeheer, gebieden waar beperkingen gelden, gereguleerde gebieden en rapportage-eenheden",
+            "Gebouwen", "Geografisch rastersysteem", "Geografische namen", "Geologie",
+            "Habitats en biotopen", "Hoogte", "Hydrografie", "Kadastrale percelen", "Landgebruik", "Menselijke gezondheid en veiligheid",
+            "Meteorologische geografische kenmerken", "Milieubewakingsvoorzieningen", "Minerale bronnen", 
+            "Nutsdiensten en overheidsdiensten", "Oceanografische geografische kenmerken", "Orthobeeldvorming", 
+            "Spreiding van de bevolking — demografie", "Spreiding van soorten", "Statistische eenheden", 
+            "Systemen voor verwijzing door middel van coördinaten", "Vervoersnetwerken", "Zeegebieden" ]
+    
+    def list_suggestionKeyword(self):
+        url1 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
+        url2 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Title"
         try:
-            if self.opener: response = self.opener.open(url, timeout=self.timeout)
-            else: response = urllib.request.urlopen(url, timeout=self.timeout)
+            if self.opener: 
+                response1 = self.opener.open(url1, timeout=self.timeout)
+                response2 = self.opener.open(url2, timeout=self.timeout)
+            else: 
+                response1 = urllib.request.urlopen(url1, timeout=self.timeout)
+                response2 = urllib.request.urlopen(url2, timeout=self.timeout)
         except  (urllib.error.HTTPError, urllib.error.URLError) as e:
             raise metaError( str( e.reason ))
         except:
             raise metaError( str( sys.exc_info()[1] ))
         else:
-            result = json.load(response)
-            return result[1]
+            result1 = ET.parse(response1).getroot()
+            result2 = ET.parse(response2).getroot()
+            r1 = [ n.text for n in result1.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
+            r2 = [ n.text for n in result2.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
+            return r1 + r2
 
     def list_organisations(self):
-        url = self.geoNetworkUrl + 'q?fast=index&from=1&to=1&category=inspire&any_OR_geokeyword_OR_title_OR_keyword=&relation=within'
+        url = self.geoNetworkUrl + 'inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
 
         try:
             if self.opener: response = self.opener.open(url, timeout=self.timeout)
@@ -177,54 +157,32 @@ class MDReader(object):
         except:
             raise metaError( str( sys.exc_info()[1] ))
         else:
-            result = ET.parse(response)
-            r = result.getroot()
-            organisations = [n.attrib['name'] for n in  r.findall('./summary/orgNames/orgName')]
+            result = ET.parse(response).getroot()
+            organisations = [ n.text for n in result.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
             organisations.sort()
             return organisations
-            
-    def list_bronnen(self):
-        url = self.geoNetworkUrl + "/xml.info?type=sources"
-        try:
-            if self.opener: response = self.opener.open(url, timeout=self.timeout)
-            else: response = urllib.request.urlopen(url, timeout=self.timeout)
-        except  (urllib.error.HTTPError, urllib.error.URLError) as e:
-            raise metaError( str( e.reason ))
-        except:
-            raise metaError( str( sys.exc_info()[1] ))
-        else:
-            result = ET.parse(response)
-            r= result.getroot()
-            bronnen = [ ( n.find("uuid").text, n.find("name").text ) 
-                     for n in  r[0].findall('source') ]
-            bronnen.sort()
-            return bronnen
 
-    def search(self, q="", start=1, to=20, orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='', keyword='' ):
-        url = self._createFindUrl( q, start, to,  orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType, keyword)
-        try:
-            if self.opener: response = self.opener.open(url, timeout=self.timeout)
-            else: response = urllib.request.urlopen(url, timeout=self.timeout)
-        except  (urllib.error.HTTPError, urllib.error.URLError) as e:
-            raise metaError( str( e.reason ) +' on '+ url )
-        except:
-            raise metaError( str( sys.exc_info()[1] ))
-        else:
-            result = ET.parse(response)
-            resultXML = result.getroot()
-            return  resultXML
+    def search(self, q="", start=1, step=20, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
+        url = self._createFindUrl( q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
+        if self.opener: response = self.opener.open(url, timeout=self.timeout)
+        else: response = urllib.request.urlopen(url, timeout=self.timeout)
+        result = ET.parse(response)
+        return result.getroot()
 
-    def searchAll(self, q="", orgName='', dataType='', siteId='', inspiretheme='', inspireannex='', inspireServiceType='', keyword=''):
+    def searchAll(self, q="", orgName='', dataType='', inspiretheme='', inspireServiceType=''):
         start= 1
-        step= 1000
-        searchResult = self.search(q, start, step, orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType, keyword)
-        count = int( searchResult[0].attrib["count"] )
+        step= 100
+        result = self.search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
+        searchResult = result.find(".//{http://www.opengis.net/cat/csw/2.0.2}SearchResults")
+        if not searchResult: return
+        count = int( searchResult.attrib["numberOfRecordsMatched"] )
         start += step
         while (start) <= count:  
-           result = self.search(q, start, (start + step -1), orgName, dataType, siteId, inspiretheme, inspireannex, inspireServiceType)
-           mds= result.findall("metadata")
+           result = self.search(q, start, step, orgName, dataType,inspiretheme, inspireServiceType)
+           mds= result.findall(".//{http://www.opengis.net/cat/csw/2.0.2}Record")
            for md in mds: searchResult.append( md )
            start += step
+           
         return searchResult
 
 
@@ -235,11 +193,8 @@ class metaError(Exception):
         return repr(self.message)
    
 def getWmsLayerNames( url, proxyUrl=''):
-    if (not "request=getcapabilities" in url.lower()) or (not "service=wms" in url.lower()):
-        capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
-    else: 
-        capability = url
-        
+    capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
+    
     if proxyUrl:
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
@@ -248,7 +203,7 @@ def getWmsLayerNames( url, proxyUrl=''):
     else:
         responseWMS =  urllib.request.urlopen(capability)
     
-    result = ET.parse(responseWMS)
+    result = ET.parse(responseWMS).getroot()
     layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
     layerNames=[]
 
@@ -320,8 +275,8 @@ def getWMTSlayersNames( url, proxyUrl='' ):
     matrixSets = content.findall("{http://www.opengis.net/wmts/1.0}TileMatrixSet")
 
     for lyr in layers:
-        name= lyr.find("{http://www.opengis.net/ows/1.1}Identifier")
-        title = lyr.find("{http://www.opengis.net/ows/1.1}Title")
+        name=    lyr.find("{http://www.opengis.net/ows/1.1}Identifier")
+        title =  lyr.find("{http://www.opengis.net/ows/1.1}Title")
         matrix = lyr.find("{http://www.opengis.net/wmts/1.0}TileMatrixSetLink/{http://www.opengis.net/wmts/1.0}TileMatrixSet")
         format = lyr.find("{http://www.opengis.net/wmts/1.0}Format")
         
@@ -392,8 +347,7 @@ def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', form
     return uri
 
 def makeWCSuri( url, layer ): # srsname="EPSG:28992", format="GEOTIFF"
-    params = { 
-                'dpiMode': 7 ,
+    params = {  'dpiMode': 7 ,
                 'identifier': layer,
                 'url': url.split('?')[0]  } 
 

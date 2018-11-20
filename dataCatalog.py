@@ -200,7 +200,7 @@ class dataCatalog(QDialog):
              QCoreApplication.translate("datacatalog", "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
 
     def openUrl(self, url):
-        if url: webbrowser.open_new_tab( url.encode("utf-8") )
+        if url: webbrowser.open_new_tab( url )
 
     def addWMS(self):
         if self.wms == None: return
@@ -309,7 +309,6 @@ class dataCatalog(QDialog):
       else:  
          self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
                level=Qgis.Critical , duration=10) 
-
     
     def addWCS(self):
       lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )

@@ -36,15 +36,14 @@ class MDdata(object):
            else: 
                record['geoBox'] = [3.1, 50.6, 7.4, 53.6]
            
-           record['wms'] = self._findWXS( md, "OGC:WFS" )
+           record['wms'] = self._findWXS( md, "OGC:WMS" )
            record['wfs'] = self._findWXS( md, "OGC:WFS" )
            record['wcs'] = self._findWXS( md, "OGC:WCS" )
            record['wmts'] = self._findWXS( md , "OGC:WMTS")
            record['download'] = self._findDownloads( md )
-           
            self.records.append(record)
            
-    def _findWXS(self , node, protocol= "OGC:WFS" ):
+    def _findWXS(self , node, protocol= None ):
         links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                             if "protocol" in n.attrib and n.attrib["protocol"] == protocol] 
 
@@ -59,29 +58,28 @@ class MDdata(object):
         if len(links) > 0: return links[0]
     
         links = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
-                                if "protocol" in n.attrib and n.attrib["protocol"] == "INSPIRE Atom"] 
+                                if "protocol" in n.attrib and "atom" in n.attrib["protocol"].lower() ] 
         if len(links) == 0: 
             return ""
-        
         link = links[0]
-        
-        result = []
+
         try:    
             if self._proxy:
                 proxy = urllib.request.ProxyHandler({'http': self._proxy})
                 auth = urllib.request.HTTPBasicAuthHandler()
                 opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-                response =  opener.open(link, timeout=self)
+                response =  opener.open(link, timeout=5)
             else:
-                response =  urllib.request.urlopen(link, timeout=self)   
+                response =  urllib.request.urlopen(link, timeout=5)   
         except:
             return ""
         
-        root = ET.parse(response).getroot()
+        result = response.read()
+        root = ET.fromstring(result)
         entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
         for entry in entries:
             dl = entry.find( "{http://www.w3.org/2005/Atom}link")
-            if dl and "href" in dl.attrib: 
+            if dl is not None and "href" in dl.attrib: 
                 return dl.attrib["href"]
         return ""
 
@@ -104,8 +102,21 @@ class MDReader(object):
         url = self.geoNetworkUrl + "inspire?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
         
         data = {}
-        #TODO: make CQL query
-        CQL = "AnyText = '" + q + "'"
+        #make CQL query
+        
+        if inspiretheme: 
+            CQL =  "( (Subject='"+ inspiretheme +"' AND AnyText='GEMET - INSPIRE themes, version 1.0') "
+            if q: CQL += " AND AnyText = '" + q + "' "  
+        else:
+            CQL = "( AnyText = '" + q + "' "
+        if orgName: 
+            CQL += " AND OrganisationName = '" + orgName + "' "
+        if dataType: 
+            CQL += " AND type = '" + dataType + "' "
+        if inspireServiceType: 
+            CQL += " AND ServiceType = '" + inspireServiceType + "' " 
+        CQL +=  " )"
+            
         data["constraint"] = CQL
         data["maxRecords"] = maxRecords
         data["startPosition"] = start

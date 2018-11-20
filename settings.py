@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 from qgis.PyQt.QtCore import QSettings
 from qgis.core import QgsNetworkAccessManager
-import urllib.request
-
+import sys, os, urllib.request
 
 class settings(object):
     def __init__(self):
         self.s = QSettings()
-        
         self.timeout =  int( self.s.value("inspireNL/timeout" ,15))
         self._getProxySettings()
-    
+
     def _getProxySettings(self):
         self.proxyEnabled = self.proxyHost = self.proxyPort = self.proxyUser = self.proxyPassword = None
         self.proxyUrl = ""
         proxyEnabled = self.s.value("proxy/proxyEnabled", "")
-        if proxyEnabled == 1 or proxyEnabled == "true":
+        if proxyEnabled == 1 or proxyEnabled == "true": #1 is win or linux, mac is "true"
             self.proxyEnabled = True
             self.proxy_type = self.s.value("proxy/proxyType", "")
             self.proxyHost = self.s.value("proxy/proxyHost", "" )
@@ -43,7 +41,6 @@ class settings(object):
                    self.proxyUrl += self.proxyUser + ':' + self.proxyPassword + '@'
                self.proxyUrl += self.proxyHost + ':' + self.proxyPort
                self.proxyUrlS = self.proxyUrl.replace("http://", "https://")
-
             
-    def setTimeout( seconds ):
+    def setTimeout(self,  seconds ):
         self.s.setValue("inspireNL/timeout", seconds)

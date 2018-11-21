@@ -7,7 +7,7 @@ from qgis.PyQt.QtCore import QSortFilterProxyModel, QRegExp, QStringListModel
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis
 from qgis.gui import QgsMessageBar 
-import sys, os, webbrowser
+import sys, os, webbrowser, json
 from . import geometryhelper as gh
 from .settings import settings
 from . import metadataParser as metadata
@@ -71,7 +71,7 @@ class dataCatalog(QDialog):
         self.ui.addWFSbtn.clicked.connect(self.addWFS)
         self.ui.addWMTSbtn.clicked.connect(self.addWMTS)
         self.ui.addWCSbtn.clicked.connect(self.addWCS)
-        self.ui.DLbtn.clicked.connect(lambda: self.openUrl(self.dl))
+        self.ui.DLbtn.clicked.connect(self.dlClicked)
         self.ui.resultView.clicked.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
         self.finished.connect(self.clean)
@@ -83,8 +83,10 @@ class dataCatalog(QDialog):
         for rec in reclist:
             title = QStandardItem( rec['title'] )             #0
             wms = QStandardItem( rec['wms'][1] )              #1
-            downloadLink = QStandardItem(rec['download'])     #2
-            id = QStandardItem( rec['uuid'] )                 #3
+            dl = json.dumps( rec['download'] ) if len(rec['download']) else None
+            downloadLinks = QStandardItem(dl)                 #2
+            
+            id =       QStandardItem( rec['uuid'] )           #3
             abstract = QStandardItem( rec['abstract'] )       #4
             wfs =      QStandardItem( rec['wfs'][1] )         #5
             wcs =      QStandardItem( rec['wcs'][1] )         #6
@@ -94,7 +96,7 @@ class dataCatalog(QDialog):
             wfsName =  QStandardItem( rec['wfs'][0] )         #9
             wcsName =  QStandardItem( rec['wcs'][0] )         #10
             wmtsName = QStandardItem( rec['wmts'][0] )        #11
-            self.model.appendRow([title,wms,downloadLink,id,abstract,wfs,wcs,wmts,wmsName,wfsName,wcsName,wmtsName])
+            self.model.appendRow([title,wms,downloadLinks,id,abstract,wfs,wcs,wmts,wmsName,wfsName,wcsName,wmtsName])
 
     #overwrite
     def show(self):
@@ -118,7 +120,9 @@ class dataCatalog(QDialog):
            row = self.ui.resultView.selectedIndexes()[0].row()  
            
            self.wms = self.proxyModel.data( self.proxyModel.index( row, 1) )
-           self.dl  = self.proxyModel.data( self.proxyModel.index( row, 2) )
+           dl  = self.proxyModel.data( self.proxyModel.index(row, 2) )
+           self.dl = json.loads(dl) if dl else None
+
            self.wfs = self.proxyModel.data( self.proxyModel.index( row, 5) )
            self.wcs = self.proxyModel.data( self.proxyModel.index( row, 6) )
            self.wmts= self.proxyModel.data( self.proxyModel.index( row, 7) )
@@ -339,6 +343,22 @@ class dataCatalog(QDialog):
           level=Qgis.Critical , duration=10) 
       QApplication.restoreOverrideCursor()
             
+    def dlClicked(self):
+        if not self.dl or len(self.dl) == 0: 
+            return
+        
+        if len(self.dl) == 1:
+            self.openUrl( self.dl[0][1] )
+            return
+        
+        layerTitle, accept = QInputDialog.getItem(self, "Laag downloaden", 
+                              "Kies een download", [n[0] for n in self.dl], editable=0)
+        if not accept: 
+            return
+    
+        dlName = [n[1] for n in self.dl if n[0] == layerTitle ][0]
+        self.openUrl( dlName )
+  
     def clean(self):
         self.model.clear()
         self.wms = None

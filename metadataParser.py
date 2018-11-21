@@ -53,35 +53,40 @@ class MDdata(object):
         return ("","")
 
     def _findDownloads(self , node):
-        links = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+        links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                                 if "protocol" in n.attrib and "DOWNLOAD" in n.attrib["protocol"].upper() ] 
-        if len(links) > 0: return links[0]
-    
-        links = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+        atoms = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                                 if "protocol" in n.attrib and "atom" in n.attrib["protocol"].lower() ] 
-        if len(links) == 0: 
-            return ""
-        link = links[0]
+        
+        if len(links) == 0 and len(atoms) == 0: 
+            return []
+        
+        if len(links) > 0 and len(atoms) == 0: 
+            results = [[n.attrib["name"], n.text ] for n in links]
+            return results
+    
+        atom = atoms[0]
 
         try:    
             if self._proxy:
                 proxy = urllib.request.ProxyHandler({'http': self._proxy})
                 auth = urllib.request.HTTPBasicAuthHandler()
                 opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-                response =  opener.open(link, timeout=5)
+                response =  opener.open(atom, timeout=5)
             else:
-                response =  urllib.request.urlopen(link, timeout=5)   
+                response =  urllib.request.urlopen(atom, timeout=5)   
         except:
-            return ""
+            return []
         
-        result = response.read()
-        root = ET.fromstring(result)
+        results = []
+        root = ET.parse(response).getroot()
         entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
         for entry in entries:
             dl = entry.find( "{http://www.w3.org/2005/Atom}link")
-            if dl is not None and "href" in dl.attrib: 
-                return dl.attrib["href"]
-        return ""
+            titleNode = entry.find( "{http://www.w3.org/2005/Atom}title")
+            if dl is not None and titleNode is not None and "href" in dl.attrib: 
+               results.append( [ titleNode.text, dl.attrib["href"] ] )  
+        return results
 
 
 class MDReader(object):
@@ -138,24 +143,24 @@ class MDReader(object):
     
     def list_suggestionKeyword(self):
         url1 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
-        url2 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Title"
+        #url2 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Title"
         try:
             if self.opener: 
                 response1 = self.opener.open(url1, timeout=self.timeout)
-                response2 = self.opener.open(url2, timeout=self.timeout)
+                #response2 = self.opener.open(url2, timeout=self.timeout)
             else: 
                 response1 = urllib.request.urlopen(url1, timeout=self.timeout)
-                response2 = urllib.request.urlopen(url2, timeout=self.timeout)
+                #response2 = urllib.request.urlopen(url2, timeout=self.timeout)
         except  (urllib.error.HTTPError, urllib.error.URLError) as e:
             raise metaError( str( e.reason ))
         except:
             raise metaError( str( sys.exc_info()[1] ))
         else:
             result1 = ET.parse(response1).getroot()
-            result2 = ET.parse(response2).getroot()
+            #result2 = ET.parse(response2).getroot()
             r1 = [ n.text for n in result1.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            r2 = [ n.text for n in result2.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            return r1 + r2
+            #r2 = [ n.text for n in result2.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
+            return r1 
 
     def list_organisations(self):
         url = self.geoNetworkUrl + 'inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
@@ -229,10 +234,7 @@ def getWmsLayerNames( url, proxyUrl=''):
     return layerNames
 
 def getWFSLayerNames( url, proxyUrl='' ):
-    if (not "request=getcapabilities" in url.lower()) or (not "service=wfs" in url.lower()):
-        capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
-    else: 
-        capability = url
+    capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
     if proxyUrl:
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
@@ -242,26 +244,46 @@ def getWFSLayerNames( url, proxyUrl='' ):
         responseWFS =  urllib.request.urlopen(capability)
     
     result = ET.parse(responseWFS).getroot()
-    
-    serv = result.find(
-         "{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
-    if serv != None :
-       raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text)
-    serv = result.find(
-         "{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceTypeVersion")
-    if serv != None :
-       raise Exception("Deze WFS is versie %s, QGIS ondersteunt alleen versie 1.0.0, eventueel kunt u de WFS 2.0 plugin gebruiken." % serv.text) 
-
-    layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
     layerNames=[]
-
-    for lyr in layers:
-        name= lyr.find("{http://www.opengis.net/wfs}Name")
-        title = lyr.find("{http://www.opengis.net/wfs}Title")
-        srs = lyr.find("{http://www.opengis.net/wfs}SRS")
-        if ( name != None) and ( title != None ):
-            if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
-            else: layerNames.append(( name.text, title.text, srs.text))
+    
+    #default
+    version = "1.0.0"
+    #is version 2.0.0
+    serv = result.find(".//{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
+    #is version 1.1.0
+    if serv is None: 
+        serv = result.find(".//{http://www.opengis.net/ows}ServiceTypeVersion")
+    
+    if serv is not None:  
+        version = serv.text
+    
+    if version == "2.0.0": 
+        layers =  result.findall( ".//{http://www.opengis.net/wfs/2.0}FeatureType" )
+        for lyr in layers:
+            name= lyr.find("{http://www.opengis.net/wfs/2.0}Name")
+            title = lyr.find("{http://www.opengis.net/wfs/2.0}Title")
+            srs = lyr.find("{http://www.opengis.net/wfs/2.0}DefaultCRS")
+            if ( name != None) and ( title != None ):
+                if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
+                else: layerNames.append(( name.text, title.text, srs.text))          
+    elif version == "1.1.0": 
+        layers =  result.findall( ".//{http://www.opengis.net/wfs/2.0}FeatureType" )
+        for lyr in layers:
+            name= lyr.find("{http://www.opengis.net/wfs}Name")
+            title = lyr.find("{http://www.opengis.net/wfs}Title")
+            srs = lyr.find("{http://www.opengis.net/wfs}DefaultCRS")
+            if ( name != None) and ( title != None ):
+                if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
+                else: layerNames.append(( name.text, title.text, srs.text))
+    else: 
+        layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
+        for lyr in layers:
+            name= lyr.find("{http://www.opengis.net/wfs}Name")
+            title = lyr.find("{http://www.opengis.net/wfs}Title")
+            srs = lyr.find("{http://www.opengis.net/wfs}SRS")
+            if ( name != None) and ( title != None ):
+                if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
+                else: layerNames.append(( name.text, title.text, srs.text))
 
     return layerNames
 

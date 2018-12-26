@@ -82,11 +82,17 @@ class inspireNL(object):
     def runAbout(self):
         ' show the dialog'
         self.aboutDlg.show()
-        # Run the dialog event loop and See if OK was pressed
-        result = self.aboutDlg.exec_()
+        # Run the dialog event loop
+        self.aboutDlg.exec_()
    
     def runCatalog(self):
         ' show the dialog'
+        if self.dataCatalogDlg.isVisible():
+           self.dataCatalogDlg.showNormal()
+           self.dataCatalogDlg.activateWindow()
+           return 
+        
         self.dataCatalogDlg.show()
-        # Run the dialog event loop and See if OK was pressed
-        result = self.dataCatalogDlg.exec_()
+        # Run the dialog event loop
+        self.dataCatalogDlg.exec_()
+        

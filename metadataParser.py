@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from future import standard_library
-standard_library.install_aliases()
 import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime
 import xml.etree.ElementTree as ET
 
@@ -107,21 +105,28 @@ class MDReader(object):
         url = self.geoNetworkUrl + "inspire?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
         
         data = {}
+        
+        #escape '-sign's in CQL 
+        q = q.replace("'", "''")
+        orgName = orgName.replace("'", "''")
+        inspiretheme = inspiretheme.replace("'", "''")
+        
         #make CQL query
+        CQLparts = []
         
         if inspiretheme: 
-            CQL =  "( (Subject='"+ inspiretheme +"' AND AnyText='GEMET - INSPIRE themes, version 1.0') "
-            if q: CQL += " AND AnyText = '" + q + "' "  
-        else:
-            CQL = "( AnyText = '" + q + "' "
+            CQLparts.append(" (Subject LIKE '"+ inspiretheme +"' AND AnyText = 'GEMET - INSPIRE themes, version 1.0') ")
+        if len(q.strip()) > 0: 
+            CQLparts.append(" AnyText LIKE '%" + q + "%' ")
         if orgName: 
-            CQL += " AND OrganisationName = '" + orgName + "' "
+            CQLparts.append(" OrganisationName = '" + orgName + "' ")
         if dataType: 
-            CQL += " AND type = '" + dataType + "' "
+            CQLparts.append(" type = '" + dataType + "' ")
         if inspireServiceType: 
-            CQL += " AND ServiceType = '" + inspireServiceType + "' " 
-        CQL +=  " )"
-            
+            CQLparts.append(" ServiceType = '" + inspireServiceType + "' ")
+
+        CQL = "( " + " AND ".join(CQLparts) + " )"
+
         data["constraint"] = CQL
         data["maxRecords"] = maxRecords
         data["startPosition"] = start
@@ -131,11 +136,13 @@ class MDReader(object):
           
     def list_inspire_theme(self):
         return [ "Administratieve eenheden", "Adressen", "Atmosferische omstandigheden", "Beschermde gebieden",
-            "Biogeografische gebieden", "Bodem", "Bodemgebruik", "Energiebronnen", "Faciliteiten voor landbouw en aquacultuur",
+            "Biogeografische gebieden", "Bodem", "Bodemgebruik", "Energiebronnen", 
+            "Faciliteiten voor landbouw en aquacultuur",
             "Faciliteiten voor productie en industrie", "Gebieden met natuurrisico's",
             "Gebiedsbeheer, gebieden waar beperkingen gelden, gereguleerde gebieden en rapportage-eenheden",
             "Gebouwen", "Geografisch rastersysteem", "Geografische namen", "Geologie",
-            "Habitats en biotopen", "Hoogte", "Hydrografie", "Kadastrale percelen", "Landgebruik", "Menselijke gezondheid en veiligheid",
+            "Habitats en biotopen", "Hoogte", "Hydrografie", "Kadastrale percelen", "Landgebruik", 
+            "Menselijke gezondheid en veiligheid",
             "Meteorologische geografische kenmerken", "Milieubewakingsvoorzieningen", "Minerale bronnen", 
             "Nutsdiensten en overheidsdiensten", "Oceanografische geografische kenmerken", "Orthobeeldvorming", 
             "Spreiding van de bevolking — demografie", "Spreiding van soorten", "Statistische eenheden", 
@@ -160,7 +167,7 @@ class MDReader(object):
             #result2 = ET.parse(response2).getroot()
             r1 = [ n.text for n in result1.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
             #r2 = [ n.text for n in result2.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            return r1 
+            return r1 #+ r2
 
     def list_organisations(self):
         url = self.geoNetworkUrl + 'inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'

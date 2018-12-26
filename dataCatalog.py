@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 #from __future__ import absolute_import
-from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication,  QSortFilterProxyModel, QRegExp, QStringListModel
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog
-from qgis.PyQt.QtCore import QSortFilterProxyModel, QRegExp, QStringListModel
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, QMessageBox
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis
-from qgis.gui import QgsMessageBar 
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsWkbTypes 
+from qgis.gui import QgsMessageBar
 import sys, os, webbrowser, json
 from . import geometryhelper as gh
 from .settings import settings
@@ -37,13 +36,13 @@ class dataCatalog(QDialog):
         
         #get settings
         self.s = settings()
-
         self.gh = gh.geometryHelper( self.iface )
         
         #setup a message bar
         self.bar = QgsMessageBar() 
         self.bar.setSizePolicy( QSizePolicy.Minimum, QSizePolicy.Fixed )
         self.ui.verticalLayout.addWidget(self.bar)
+        
         #vars
         self.firstShow = True
         self.wms = None
@@ -52,11 +51,13 @@ class dataCatalog(QDialog):
         self.wcs = None
         self.dl = None
         self.zoek = ''
+        
         #datamodel
         self.model = QStandardItemModel(self)
         self.proxyModel = QSortFilterProxyModel(self)
         self.proxyModel.setSourceModel(self.model)
-        self.ui.resultView.setModel( self.proxyModel )
+        self.ui.resultView.setModel(self.proxyModel )
+        
         #completer
         self.completer = QCompleter( self )
         self.completerModel = QStringListModel(self)
@@ -256,6 +257,7 @@ class dataCatalog(QDialog):
         except:
             self.bar.pushMessage( "Error", str(sys.exc_info()[1]), level=Qgis.Critical , duration=10)
             return 
+        
         if len(lyrs) == 0:
             self.bar.pushMessage("WFS", QCoreApplication.translate("datacatalog", 
                       "Kan geen lagen vinden in: %s" % self.wfs ), level=Qgis.Warning, duration=10)
@@ -275,11 +277,22 @@ class dataCatalog(QDialog):
                 
         wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=None )
         try:
-            vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")
+            vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")            
             QgsProject.instance().addMapLayer(vlayer)
         except: 
+            self.complexWFS(True)
             self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
             return 
+
+    def complexWFS(self, isError=False):
+       msg = ""
+       if isError: msg += " Deze laag kon niet correct ingeladen worden, mogelijk gaat om complexe features.<br/>" 
+       msg += " U kunt de plugin "
+       msg += " <a href='https://plugins.qgis.org/plugins/gml_application_schema_toolbox'>GML Application Schema Toolbox</a>" 
+       msg += " installeren indien uw WFS complexe features bevat, met deze tool kunt dit soort gegevens correcter raadplegen." 
+       msg += " Voer <em>de url van de gevonden WFS</em> in en doorloop de wizard, die u vindt op de menubalk onder:" 
+       msg += " QGIS GML Application Schema Toolbox > Wizard" 
+       QMessageBox.warning(self.iface.mainWindow(), "Kan features niet correct lezen.", QCoreApplication.translate("datacatalog", msg)) 
 
     def addWMTS(self):
       if self.wmts == None: return
@@ -290,11 +303,10 @@ class dataCatalog(QDialog):
           return 
       if len(lyrs) == 0:
           self.bar.pushMessage("WMTS", 
-          QCoreApplication.translate("datacatalog", 
-                    "Kan geen lagen vinden in: %s" % self.wmts ), level=Qgis.Warning, duration=10)
+          QCoreApplication.translate("datacatalog", "Kan geen lagen vinden in: %s" % self.wmts ), level=Qgis.Warning, duration=10)
           return
       elif len(lyrs) == 1:
-          layerTitle = lyrs[0][1]
+         layerTitle = lyrs[0][1]
       else:
          layerTitle, accept = QInputDialog.getItem(self, "WMTS toevoegen", 
                                     "Kies een laag om toe te voegen", [n[1] for n in lyrs], editable=0) 
@@ -311,8 +323,10 @@ class dataCatalog(QDialog):
       if rlayer.isValid():
          QgsProject.instance().addMapLayer(rlayer)
       else:  
+          
          self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
                level=Qgis.Critical , duration=10) 
+
     
     def addWCS(self):
       lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
@@ -369,12 +383,15 @@ class dataCatalog(QDialog):
         self.ui.zoekTxt.setCurrentIndex(0)
         self.ui.descriptionText.setText("")
         self.ui.countLbl.setText("")
-        self.ui.msgLbl.setText("")
         self.ui.DLbtn.setEnabled(0)
         self.ui.addWFSbtn.setEnabled(0)
         self.ui.addWMTSbtn.setEnabled(0)
         self.ui.addWMSbtn.setEnabled(0)
         self.ui.addWCSbtn.setEnabled(0)
+        self.ui.INSPIREthemaCbx.setCurrentIndex(0)
+        self.ui.organisatiesCbx.setCurrentIndex(0)
+        self.ui.typeCbx.setCurrentIndex(0)
+        self.ui.INSPIREserviceCbx.setCurrentIndex(0)
         self.ui.modelFilterCbx.setCurrentIndex(0)
         
 

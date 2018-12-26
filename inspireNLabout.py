@@ -5,6 +5,12 @@ from qgis.PyQt.QtWidgets import QDialog
 from .ui_inspireNL_dialog import Ui_inspireNLdlg
 
 class inspireNLabout(QDialog):
+    """The dialog with the about info
+
+    :param parent: the parent window 
+    :type parent: QWidget
+    """
+    
     def __init__(self, parent=None):
         QDialog.__init__(self, None)
         self.setWindowFlags( self.windowFlags() & ~Qt.WindowContextHelpButtonHint )
@@ -18,8 +24,9 @@ class inspireNLabout(QDialog):
             self.translator = QTranslator()
             self.translator.load(localePath)
             QTranslator.installTranslator(self.translator)
-        self._initGui(parent)
+        self.initGui(parent)
 
-    def _initGui(self, parent):
+    def initGui(self, parent):
+        """setup the user interface"""
         self.ui = Ui_inspireNLdlg()
         self.ui.setupUi(self)   

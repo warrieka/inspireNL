@@ -3,6 +3,12 @@ import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime
 import xml.etree.ElementTree as ET
 
 class MDdata(object):
+    """Parse a CSW-metadataXML 
+    
+    :param metadataXML: a CSW-metadata XMLdocument
+    :param proxyUrl: the proxy to use for internet calls
+    :param timeout: the timeout for internet calls
+    """
     def __init__(self, metadataXML, proxyUrl=None, timeout=5):
         self._proxy = proxyUrl
         self._timeout = timeout
@@ -88,6 +94,11 @@ class MDdata(object):
 
 
 class MDReader(object):
+    """Interact with CSW-service, to get info
+    
+    :param proxyUrl: the proxy to use for internet calls
+    :param timeout: the timeout for internet calls
+    """
     def __init__(self, proxyUrl=None, timeout=15 ):
         self.timeout = timeout
         self.geoNetworkUrl = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/" 
@@ -135,6 +146,10 @@ class MDReader(object):
         return url + values
           
     def list_inspire_theme(self):
+        """List the inspire-themes
+        
+        :return: a list containing the inspire themes
+        """
         return [ "Administratieve eenheden", "Adressen", "Atmosferische omstandigheden", "Beschermde gebieden",
             "Biogeografische gebieden", "Bodem", "Bodemgebruik", "Energiebronnen", 
             "Faciliteiten voor landbouw en aquacultuur",
@@ -149,15 +164,16 @@ class MDReader(object):
             "Systemen voor verwijzing door middel van coördinaten", "Vervoersnetwerken", "Zeegebieden" ]
     
     def list_suggestionKeyword(self):
+        """List the Keywords
+        
+        :return: a list with the Keywords
+        """
         url1 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
-        #url2 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Title"
         try:
             if self.opener: 
                 response1 = self.opener.open(url1, timeout=self.timeout)
-                #response2 = self.opener.open(url2, timeout=self.timeout)
             else: 
                 response1 = urllib.request.urlopen(url1, timeout=self.timeout)
-                #response2 = urllib.request.urlopen(url2, timeout=self.timeout)
         except  (urllib.error.HTTPError, urllib.error.URLError) as e:
             raise metaError( str( e.reason ))
         except:
@@ -166,10 +182,14 @@ class MDReader(object):
             result1 = ET.parse(response1).getroot()
             #result2 = ET.parse(response2).getroot()
             r1 = [ n.text for n in result1.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            #r2 = [ n.text for n in result2.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            return r1 #+ r2
+            return r1 
 
     def list_organisations(self):
+        """List the organisations
+        
+        :return: a list with the organisations
+        """
+        
         url = self.geoNetworkUrl + 'inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
 
         try:
@@ -186,6 +206,18 @@ class MDReader(object):
             return organisations
 
     def search(self, q="", start=1, step=20, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
+        """Search the csw with the following parameters:
+        
+        :param q: free text to seach for
+        :param start: initial postion of the searchresult 
+        :param step: size of the searchresult
+        :param orgName: filter on the name of a organisation
+        :param dataType: filter on the type of record: service or dataset 
+        :param inspiretheme: filter on inspiretheme
+        :param inspireServiceType: filter on inspire serviceType
+        :return: a XMLdocument with the results
+        """
+
         url = self._createFindUrl( q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
         if self.opener: response = self.opener.open(url, timeout=self.timeout)
         else: response = urllib.request.urlopen(url, timeout=self.timeout)
@@ -193,6 +225,16 @@ class MDReader(object):
         return result.getroot()
 
     def searchAll(self, q="", orgName='', dataType='', inspiretheme='', inspireServiceType=''):
+        """Search the csw, making multiple calls in case of large resultsets, with the following parameters:
+        
+        :param q: free text to seach for
+        :param orgName: filter on the name of a organisation
+        :param dataType: filter on the type of record: service or dataset 
+        :param inspiretheme: filter on inspiretheme
+        :param inspireServiceType: filter on inspire serviceType
+        :return: a composite XMLdocument with the results
+        """
+        
         start= 1
         step= 100
         result = self.search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
@@ -210,6 +252,7 @@ class MDReader(object):
 
 
 class metaError(Exception):
+    """Exception, a error in metadataXML"""
     def __init__(self, message):
         self.message = message
     def __str__(self):

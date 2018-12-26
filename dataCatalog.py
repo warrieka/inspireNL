@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#from __future__ import absolute_import
 from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication,  QSortFilterProxyModel, QRegExp, QStringListModel
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, QMessageBox
@@ -13,6 +12,11 @@ from . import metadataParser as metadata
 from .metadataParser import MDReader, MDdata, getWmsLayerNames, getWFSLayerNames, makeWFSuri, getWMTSlayersNames, makeWMTSuri,  getWCSlayerNames, makeWCSuri
 
 class dataCatalog(QDialog):
+    """The dialog for the catalog searchwindow
+
+    :param iface: A QGIS interface instance.
+    :type iface: QgsInterface
+    """
     def __init__(self, iface):
         QDialog.__init__(self, None)
         self.setWindowFlags( self.windowFlags() & ~Qt.WindowContextHelpButtonHint )
@@ -27,9 +31,9 @@ class dataCatalog(QDialog):
             self.translator = QTranslator()
             self.translator.load(localePath)
     
-        self._initGui()
+        self.initGui()
 
-    def _initGui(self):
+    def initGui(self):
         """setup the user interface"""
         self.ui = Ui_dataCatalogDlg()
         self.ui.setupUi(self)
@@ -77,7 +81,8 @@ class dataCatalog(QDialog):
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
         self.finished.connect(self.clean)
 
-    def _setModel(self, records):   
+    def setModel(self, records): 
+        """set the model of the seachresult with records (metadata.MDdata)"""
         self.model.clear()
         reclist = sorted(records, key=lambda k: k['title']) 
          
@@ -101,6 +106,7 @@ class dataCatalog(QDialog):
 
     #overwrite
     def show(self):
+        """Overwrite of QDialog.show"""
         QDialog.show(self)
         self.setWindowModality(0)
         if self.firstShow:
@@ -117,6 +123,7 @@ class dataCatalog(QDialog):
       
     #eventhandlers
     def resultViewClicked(self):
+        """Called when user clicked resultView"""
         if self.ui.resultView.selectedIndexes(): 
            row = self.ui.resultView.selectedIndexes()[0].row()  
            
@@ -158,10 +165,12 @@ class dataCatalog(QDialog):
            else: self.ui.DLbtn.setEnabled(0)
         
     def onZoekClicked(self):
+        """Called when user clicked zoekBtn"""  
         self.zoek = self.ui.zoekTxt.currentText()
         self.search()  
       
     def modelFilterCbxIndexChanged(self):
+        """Called when user changes the ModelFilterCbx """
         value = self.ui.modelFilterCbx.currentIndex()
         if value == 1:
            self.filterModel(1)
@@ -177,6 +186,7 @@ class dataCatalog(QDialog):
           self.filterModel()
           
     def filterModel(self, col=None):
+        """Filter model with col from modelFilter""" 
         if col != None:
            self.proxyModel.setFilterKeyColumn(col)
            expr = QRegExp("?*", Qt.CaseInsensitive, QRegExp.Wildcard )
@@ -185,6 +195,7 @@ class dataCatalog(QDialog):
            self.proxyModel.setFilterRegExp(None)
         
     def search(self): 
+        """start the search"""
         if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
@@ -199,15 +210,17 @@ class dataCatalog(QDialog):
         
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
-        self._setModel(searchResult.records)
+        self.setModel(searchResult.records)
         if searchResult.count == 0:
            self.bar.pushMessage( QCoreApplication.translate("datacatalog", "Waarschuwing "), 
              QCoreApplication.translate("datacatalog", "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
 
     def openUrl(self, url):
+        """Open url in browserwindow """
         if url: webbrowser.open_new_tab( url )
 
     def addWMS(self):
+        """Add WMS from current record to map"""
         if self.wms == None: return
       
         crs =  self.gh.getGetMapCrs(self.iface).authid()
@@ -250,6 +263,7 @@ class dataCatalog(QDialog):
             return 
       
     def addWFS(self):    
+        """Add WFS from current record to map"""
         if self.wfs == None: return
       
         try:
@@ -285,6 +299,8 @@ class dataCatalog(QDialog):
             return 
 
     def complexWFS(self, isError=False):
+       """Warning to be called when working WFS with complex features 
+       :param iserror: true/false, has an error been called?"""
        msg = ""
        if isError: msg += " Deze laag kon niet correct ingeladen worden, mogelijk gaat om complexe features.<br/>" 
        msg += " U kunt de plugin "
@@ -295,6 +311,7 @@ class dataCatalog(QDialog):
        QMessageBox.warning(self.iface.mainWindow(), "Kan features niet correct lezen.", QCoreApplication.translate("datacatalog", msg)) 
 
     def addWMTS(self):
+      """Add WMTS from current record to map"""
       if self.wmts == None: return
       try:
           lyrs =  metadata.getWMTSlayersNames( self.wmts, self.s.proxyUrl )
@@ -329,6 +346,7 @@ class dataCatalog(QDialog):
 
     
     def addWCS(self):
+      """Add WCS from current record to map"""
       lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
          
       if len(lyrs) == 0:
@@ -358,6 +376,7 @@ class dataCatalog(QDialog):
       QApplication.restoreOverrideCursor()
             
     def dlClicked(self):
+        """Called when user clicked downloadBtn, initiate download of current record"""
         if not self.dl or len(self.dl) == 0: 
             return
         
@@ -374,6 +393,7 @@ class dataCatalog(QDialog):
         self.openUrl( dlName )
   
     def clean(self):
+        """Reset the UI to initial positions"""
         self.model.clear()
         self.wms = None
         self.wfs = None

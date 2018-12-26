@@ -4,12 +4,14 @@ from qgis.core import QgsNetworkAccessManager
 import sys, os, urllib.request
 
 class settings(object):
+    """Called one startup to get initial values from registry, saves changes to registry"""
     def __init__(self):
         self.s = QSettings()
         self.timeout =  int( self.s.value("inspireNL/timeout" ,15))
-        self._getProxySettings()
+        self.getProxySettings()
 
-    def _getProxySettings(self):
+    def getProxySettings(self):
+        """Get proxy-settings for corporate networks, try QgsNetworkAccessManager first, then urllib.request.getproxies()"""
         self.proxyEnabled = self.proxyHost = self.proxyPort = self.proxyUser = self.proxyPassword = None
         self.proxyUrl = ""
         proxyEnabled = self.s.value("proxy/proxyEnabled", "")
@@ -43,4 +45,5 @@ class settings(object):
                self.proxyUrlS = self.proxyUrl.replace("http://", "https://")
             
     def setTimeout(self,  seconds ):
+        """Save changes in timeout setting"""
         self.s.setValue("inspireNL/timeout", seconds)

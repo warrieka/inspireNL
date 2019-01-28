@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication,  QSortFilterProxyModel, QRegExp, QStringListModel
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, QMessageBox
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, QMessageBox, QFileDialog
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsWkbTypes 
 from qgis.gui import QgsMessageBar
@@ -196,6 +196,7 @@ class dataCatalog(QDialog):
         
     def search(self): 
         """start the search"""
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         if self.ui.filterBox.isChecked():
             orgName= self.ui.organisatiesCbx.currentText()
             dataTypes= [ n[1] for n in self.md.dataTypes if n[0] == self.ui.typeCbx.currentText()] 
@@ -207,6 +208,7 @@ class dataCatalog(QDialog):
                 self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType),  proxyUrl=self.s.proxyUrl)
         else:
             searchResult = metadata.MDdata( self.md.searchAll( self.zoek ), proxyUrl=self.s.proxyUrl )
+        QApplication.restoreOverrideCursor()
         
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
@@ -265,12 +267,10 @@ class dataCatalog(QDialog):
     def addWFS(self):    
         """Add WFS from current record to map"""
         if self.wfs == None: return
-      
-        try:
-            lyrs =  metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
-        except:
-            self.bar.pushMessage( "Error", str(sys.exc_info()[1]), level=Qgis.Critical , duration=10)
-            return 
+
+        wfsinfo = metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
+        lyrs =  wfsinfo['layerNames']
+        wfsVersion = wfsinfo['version']
         
         if len(lyrs) == 0:
             self.bar.pushMessage("WFS", QCoreApplication.translate("datacatalog", 
@@ -287,28 +287,79 @@ class dataCatalog(QDialog):
           
         layerName = [n[0] for n in lyrs if n[1] == layerTitle ][0]
         crs = [n[2] for n in lyrs if n[1] == layerTitle ][0]
+        IsComplex = [n[3] for n in lyrs if n[1] == layerTitle ][0]
         url =  self.wfs.split('?')[0]
-                
-        wfsUri = metadata.makeWFSuri( url, layerName, crs, bbox=None )
-        try:
+           
+        if self.ui.dlGMLchk.isChecked():
+           self.dlWFS(url, layerName, crs, wfsVersion) 
+           return
+           
+        if IsComplex:
+            if self.complexWFS():
+                self.dlWFS(url, layerName, crs, wfsVersion)
+            return
+        else: 
+            wfsUri = metadata.makeWFSuri(url, layerName, crs, wfsVersion )
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")            
             QgsProject.instance().addMapLayer(vlayer)
-        except: 
-            self.complexWFS(True)
-            self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
-            return 
 
-    def complexWFS(self, isError=False):
-       """Warning to be called when working WFS with complex features 
-       :param iserror: true/false, has an error been called?"""
-       msg = ""
-       if isError: msg += " Deze laag kon niet correct ingeladen worden, mogelijk gaat om complexe features.<br/>" 
-       msg += " U kunt de plugin "
-       msg += " <a href='https://plugins.qgis.org/plugins/gml_application_schema_toolbox'>GML Application Schema Toolbox</a>" 
-       msg += " installeren indien uw WFS complexe features bevat, met deze tool kunt dit soort gegevens correcter raadplegen." 
-       msg += " Voer <em>de url van de gevonden WFS</em> in en doorloop de wizard, die u vindt op de menubalk onder:" 
-       msg += " QGIS GML Application Schema Toolbox > Wizard" 
-       QMessageBox.warning(self.iface.mainWindow(), "Kan features niet correct lezen.", QCoreApplication.translate("datacatalog", msg)) 
+
+    def complexWFS(self):
+       """Warning messagebox to be called when working WFS with complex features, 
+       User will be asked if (s)he wants to try load te service with download instead.
+       
+       :return: True if user wants to download else false.
+       """
+       msg = """
+       Deze laag kon niet correct ingeladen worden als WFS-laag, het vermoedelijk gaat om een service met complexe features.<br/>
+       U kunt de laag downloaden voor het huidge kaartbeeld als GML. Mogelijk worden ook dan niet alle gegeven correct waergegeven. 
+       
+       <br/><br/>U kunt eventueel de plugin 
+       <a href='https://plugins.qgis.org/plugins/gml_application_schema_toolbox'>GML Application Schema Toolbox</a>
+       installeren een WFS die complexe features correcter te raadplegen." 
+       Na installatie, vindt u deze tool op de menubalk onder: <strong>Plugins > QGIS GML Application Schema Toolbox > Wizard</strong>
+        
+       <br/><br/> Wilt u in de plaats proberen deze laag te downloaden vor het huidge kaartbeeld en in te laden? 
+       """
+       
+       buttonDlg = QMessageBox.warning(self.iface.mainWindow(), "Kan features niet correct lezen.", 
+            QCoreApplication.translate("datacatalog", msg),  QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel, QMessageBox.Cancel)  
+       if buttonDlg == QMessageBox.Yes:  
+           return True
+       else:
+           return False 
+       
+    def dlWFS(self, url,  layerName="", crs="EPSG:4326", wfsVersion="2.0.0"):
+        """Download a WFS as a GML-file for current extend. 
+        The user wil be asked to chose filename and location. 
+        
+       :param url: the url of the wfs
+       :param iserror: true/false, has an error been called?
+       :param wfsVersion: 2.0.0 or 1.1.0
+       :param layerName: the typeName of the layer in  the WFS
+        """
+        title = "Opslaan als GML voor huid kaartbeeld"
+        fileName, _ = QFileDialog.getSaveFileName(self.iface.mainWindow(), title, None ,"GML (*.gml)")
+
+        if not fileName: return
+    
+        e = self.iface.mapCanvas().extent()
+        
+        #find numerice part in crs
+        crsNumS = "".join([s for s in crs if s.isdigit() ])
+        if crsNumS == "":
+            crsNum= 4326
+            crs="EPSG:4326"
+        else:
+            crsNum = int(crsNumS)
+        
+        eMin = self.gh.prjPtFromMapCrs( [e.xMinimum(), e.yMinimum()], crsNum)
+        eMax = self.gh.prjPtFromMapCrs( [e.xMaximum(), e.yMaximum()], crsNum)
+        
+        bbox = [ eMin.x(), eMin.y(), eMax.x(), eMax.y() ]
+        metadata.downloadWFS(url, layerName, fileName, crs, 50000, wfsVersion, bbox, self.s.proxyUrl, 120)
+        layer = self.iface.addVectorLayer(fileName , layerName, "ogr")
+             
 
     def addWMTS(self):
       """Add WMTS from current record to map"""
@@ -343,8 +394,7 @@ class dataCatalog(QDialog):
           
          self.bar.pushMessage("Error", QCoreApplication.translate("datacatalog", "Kan WMS niet laden"), 
                level=Qgis.Critical , duration=10) 
-
-    
+  
     def addWCS(self):
       """Add WCS from current record to map"""
       lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )

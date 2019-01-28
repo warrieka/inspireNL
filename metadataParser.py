@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime
+import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime, json
 import xml.etree.ElementTree as ET
 
 class MDdata(object):
@@ -10,8 +10,8 @@ class MDdata(object):
     :param timeout: the timeout for internet calls
     """
     def __init__(self, metadataXML, proxyUrl=None, timeout=5):
-        self._proxy = proxyUrl
-        self._timeout = timeout
+        #self._proxy = proxyUrl
+        #self._timeout = timeout
         self.count = 0 if not metadataXML else int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         self.records = []
 
@@ -205,7 +205,7 @@ class MDReader(object):
             organisations.sort()
             return organisations
 
-    def search(self, q="", start=1, step=20, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
+    def search(self, q="", start=1, step=100, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
         """Search the csw with the following parameters:
         
         :param q: free text to seach for
@@ -258,16 +258,23 @@ class metaError(Exception):
     def __str__(self):
         return repr(self.message)
    
-def getWmsLayerNames( url, proxyUrl=''):
+def getWmsLayerNames( url, proxyUrl='', timeout=5):
+    """
+    :param url: the getcapabilities url of the WMS
+    :param proxyUrl: the url of the network proxy 
+    :param timeout:  the timeout for internet calls
+    
+    :return: a list of tuples in de form: [(name, title, style ), ...]
+    """
     capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
     
     if proxyUrl:
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
         opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWMS =  opener.open(capability)
+        responseWMS =  opener.open(capability, timeout=timeout)
     else:
-        responseWMS =  urllib.request.urlopen(capability)
+        responseWMS =  urllib.request.urlopen(capability, timeout=timeout)
     
     result = ET.parse(responseWMS).getroot()
     layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
@@ -283,24 +290,30 @@ def getWmsLayerNames( url, proxyUrl=''):
 
     return layerNames
 
-def getWFSLayerNames( url, proxyUrl='' ):
+def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
+    """
+    :param url: the getcapabilities url of the WFS
+    :param proxyUrl: the url of the network proxy 
+    :param timeout:  the timeout for internet calls
+    
+    :return: a list of tuples in de form: [(name, title, srs ), ...]
+    """
     capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
     if proxyUrl:
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
         opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWFS =  opener.open(capability)
+        responseWFS =  opener.open(capability, timeout=timeout)
     else:
-        responseWFS =  urllib.request.urlopen(capability)
+        responseWFS =  urllib.request.urlopen(capability, timeout=timeout)
     
     result = ET.parse(responseWFS).getroot()
     layerNames=[]
     
     #default
     version = "1.0.0"
-    #is version 2.0.0
     serv = result.find(".//{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
-    #is version 1.1.0
+
     if serv is None: 
         serv = result.find(".//{http://www.opengis.net/ows}ServiceTypeVersion")
     
@@ -313,18 +326,24 @@ def getWFSLayerNames( url, proxyUrl='' ):
             name= lyr.find("{http://www.opengis.net/wfs/2.0}Name")
             title = lyr.find("{http://www.opengis.net/wfs/2.0}Title")
             srs = lyr.find("{http://www.opengis.net/wfs/2.0}DefaultCRS")
+            
+            isComplex = testComplex(url, name.text, version, proxyUrl, timeout )
+            
             if ( name != None) and ( title != None ):
                 if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
-                else: layerNames.append(( name.text, title.text, srs.text))          
+                else: layerNames.append(( name.text, title.text, srs.text, isComplex))          
     elif version == "1.1.0": 
         layers =  result.findall( ".//{http://www.opengis.net/wfs/2.0}FeatureType" )
         for lyr in layers:
             name= lyr.find("{http://www.opengis.net/wfs}Name")
             title = lyr.find("{http://www.opengis.net/wfs}Title")
             srs = lyr.find("{http://www.opengis.net/wfs}DefaultCRS")
+                        
+            isComplex = testComplex(url, name.text, version, proxyUrl, timeout )
+            
             if ( name != None) and ( title != None ):
                 if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
-                else: layerNames.append(( name.text, title.text, srs.text))
+                else: layerNames.append(( name.text, title.text, srs.text, isComplex))
     else: 
         layers =  result.findall( ".//{http://www.opengis.net/wfs}FeatureType" )
         for lyr in layers:
@@ -333,11 +352,17 @@ def getWFSLayerNames( url, proxyUrl='' ):
             srs = lyr.find("{http://www.opengis.net/wfs}SRS")
             if ( name != None) and ( title != None ):
                 if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
-                else: layerNames.append(( name.text, title.text, srs.text))
+                else: layerNames.append(( name.text, title.text, srs.text, False))
+    return { 'version': version, 'layerNames': layerNames }
 
-    return layerNames
-
-def getWMTSlayersNames( url, proxyUrl='' ):
+def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
+    """
+    :param url: the getcapabilities url of the WCS
+    :param proxyUrl: the url of the network proxy 
+    :param timeout:  the timeout for internet calls
+    
+    :return: a list of tuples in de form: [(name, title, matrix, format, srs ), ...]
+    """
     if (not "request=getcapabilities" in url.lower()) or (not "service=wmts" in url.lower()):
         capability = url.split("?")[0] + "?service=WMTS&request=Getcapabilities&version="
     else: 
@@ -346,9 +371,9 @@ def getWMTSlayersNames( url, proxyUrl='' ):
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
         opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWMTS =  opener.open(capability)
+        responseWMTS =  opener.open(capability, timeout=timeout)
     else:
-        responseWMTS =  urllib.request.urlopen(capability)
+        responseWMTS =  urllib.request.urlopen(capability, timeout=timeout)
         
     result = ET.parse(responseWMTS).getroot()
     content = result.find( "{http://www.opengis.net/wmts/1.0}Contents" )
@@ -374,22 +399,30 @@ def getWMTSlayersNames( url, proxyUrl='' ):
 
     return layerNames
 
-def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1" ):    
+def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1", timeout=5 ):
+    """
+    :param url: the getcapabilities url of the WCS
+    :param proxyUrl: the url of the network proxy 
+    :param wcs_version: the version of WCS to use, supported versions: 2.0, 1.1, 1.0
+    :param timeout:  the timeout for internet calls
+    
+    :return: a list of tuples in de form:   [(Identifier, Title ), ...]
+    """    
     capability = url.split("?")[0] + "?request=GetCapabilities&version=%s.0&service=WCS" % wcs_version
 
     if proxyUrl:
        proxy = urllib.request.ProxyHandler({'http': proxyUrl})
        auth = urllib.request.HTTPBasicAuthHandler()
        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-       responseWCS =  opener.open(capability)
+       responseWCS =  opener.open(capability, timeout=timeout)
        #find namespaces to identify WCS-version returned
        namespaces = dict([node for _, node in ET.iterparse( responseWCS, events=['start-ns'])])
-       responseWCS =  opener.open(capability)
+       responseWCS =  opener.open(capability, timeout=timeout)
     else:
-       responseWCS =  urllib.request.urlopen(capability)
+       responseWCS =  urllib.request.urlopen(capability, timeout=timeout)
        #find namespaces to identify WCS-version returned
        namespaces = dict([node for _, node in ET.iterparse( responseWCS, events=['start-ns'])])
-       responseWCS =  urllib.request.urlopen(capability)
+       responseWCS =  urllib.request.urlopen(capability, timeout=timeout)
     
     wcs_version = namespaces[''][-3:]
     wcsNS = "http://www.opengis.net/wcs/" + wcs_version
@@ -407,7 +440,15 @@ def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1" ):
     
     return layerNames
 
-def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0', bbox=None ):
+def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
+    """Make a QGIS-uri to load WFS-services.
+    :param url: the base url of the wfs
+    :param name: The name of the layer
+    :param srsname: the crs as a string,this form <auth>:<id>, like EPSG:28992
+    :param version: WFS version: 1.0.0, 1.1.0 or 2.0.0
+
+    :return: the QGIS-uri
+    """
     params = {  'SERVICE': 'WFS',
                 'VERSION': version ,
                 'REQUEST': 'GetFeature',
@@ -418,6 +459,16 @@ def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0', bbox=None )
     return uri
 
 def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', format='image/png' ):
+    """Make a QGIS-uri to load WMTS-services.
+    :param url: the base url of the WMTS
+    :param name: The name of the layer
+    :param tileMatrixSet: The namae of the tileMatrixSet to use
+    :param srsname: the crs as a string,this form <auth>:<id>, like EPSG:28992
+    :param styles: the name(s) of the styles to use
+    :param format: the name of the mimetype of the output: image/png, image/jpeg, ...
+
+    :return: the QGIS-uri
+    """
     params = {  'tileMatrixSet': tileMatrixSet,
                 'styles': styles, 
                 'format': format ,
@@ -429,7 +480,13 @@ def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', form
     uri = urllib.parse.unquote( urllib.parse.urlencode(params)  )
     return uri
 
-def makeWCSuri( url, layer ): # srsname="EPSG:28992", format="GEOTIFF"
+def makeWCSuri( url, layer ):  
+    """Make a QGIS-uri to load WCS-services.
+    :param url: the base url of the WMTS
+    :param layer: The name of the layer
+
+    :return: the QGIS-uri
+    """
     params = {  'dpiMode': 7 ,
                 'identifier': layer,
                 'url': url.split('?')[0]  } 
@@ -437,3 +494,90 @@ def makeWCSuri( url, layer ): # srsname="EPSG:28992", format="GEOTIFF"
     uri = urllib.parse.unquote( urllib.parse.urlencode(params)  )
     return uri 
       
+def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
+    """
+    Test if a WFS has complex features for a specific typeName
+    :param url: the url of the WFS
+    :param typeName: the typeName of the layer to test for complex features
+    :param version: WFS version: 1.1.0 or 2.0.0
+    :param proxyUrl: the url of the network proxy 
+    :param timeout:  the timeout for internet calls
+    
+    :return: a boolean, true if the WFS has complex features
+    """
+    #TODO this a very ugly way of  doing this, find a better way!
+    
+    if version not in ["1.1.0", "2.0.0"]: return False
+    
+    if version == "1.1.0": countStr = "maxFeatures"
+    if version == "2.0.0": countStr = "count"
+    
+    baseUrl = url.split("?")[0] 
+    qryString = "?{}=1&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&TYPENAME={}&outputFormat=json".format(countStr, version, typeName)
+    fullUrl = baseUrl + qryString
+    
+    try: 
+        if proxyUrl:
+            proxy = urllib.request.ProxyHandler({'http': proxyUrl})
+            auth = urllib.request.HTTPBasicAuthHandler()
+            opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
+            response =  opener.open(fullUrl, timeout=timeout)
+        else:
+            response =  urllib.request.urlopen(fullUrl, timeout=timeout)
+    
+        geojson = json.load(response) 
+        features = geojson['features']
+        
+        if len(features) > 0:
+            properties = features[0]["properties"]
+            for n in properties:
+                val = properties[n]
+                if type(val) == dict: return True
+        return False
+            
+    except:
+        print("Error in finding out WFS-complex:" + str( sys.exc_info()[1] ) )
+        return False
+    
+def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, version="1.1.0", bbox=[], proxyUrl='', timeout=5):
+    """
+    Download a WFS as GML-file for a specific area
+    :param url: the url of the WFS
+    :param typeName: the typeName of the layer to download
+    :param outputLocation: the path and filename of the output gml
+    :param maxCount: max number of features
+    :param version: WFS version: 1.1.0 or 2.0.0
+    :param bbox: limit the output to a certain area
+    :param proxyUrl: the url of the network proxy 
+    :param timeout:  the timeout for internet calls
+    
+    :return: outputLocation
+    """
+    if version not in ["1.1.0", "2.0.0"]: 
+        version = "1.1.0"
+    
+    if version == "1.1.0": countStr = "maxFeatures"
+    if version == "2.0.0": countStr = "count"
+    if bbox: bboxS = ",".join([str(n) for n in bbox])
+    
+    baseUrl = url.split("?")[0] 
+    qryString = "?{}={}&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&TYPENAME={}&srsName={}&bbox={}".format(
+                                                            countStr, maxCount, version, typeName, crs, bboxS) 
+    fullUrl = baseUrl + qryString
+    
+    if proxyUrl:
+        proxy =  urllib.request.ProxyHandler({'http': proxyUrl})
+        auth =   urllib.request.HTTPBasicAuthHandler()
+        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
+        response = opener.open(fullUrl, timeout=timeout)
+    else:
+        response = urllib.request.urlopen(fullUrl, timeout=timeout)
+    
+    with response, open(outputLocation, 'wb') as out_file:
+        data = response.read() 
+        out_file.write(data)
+        
+    return outputLocation
+    
+    
+    

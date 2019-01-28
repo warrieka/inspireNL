@@ -14,6 +14,7 @@ If you have any questions about INSPIRE or the plugin, please visit https://www.
 
 """
 
+
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
     from .inspireNL import inspireNL

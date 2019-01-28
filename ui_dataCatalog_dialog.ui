@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>699</width>
-    <height>623</height>
+    <width>722</width>
+    <height>648</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -22,6 +22,12 @@
   <property name="windowIcon">
    <iconset resource="resources.qrc">
     <normaloff>:/plugins/inspireNL/images/inspireSearch.png</normaloff>:/plugins/inspireNL/images/inspireSearch.png</iconset>
+  </property>
+  <property name="statusTip">
+   <string/>
+  </property>
+  <property name="whatsThis">
+   <string/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -287,6 +293,19 @@
          </property>
          <property name="selectionBehavior">
           <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="dlGMLchk">
+         <property name="statusTip">
+          <string>WFS donwloaden binnen huidig kaartbeeld als een bestand en niet inladen als een service. </string>
+         </property>
+         <property name="whatsThis">
+          <string>WFS donwloaden binnen huidig kaartbeeld als een bestand en niet inladen als een service. </string>
+         </property>
+         <property name="text">
+          <string>WFS donwloaden binnen huidig kaartbeeld</string>
          </property>
         </widget>
        </item>

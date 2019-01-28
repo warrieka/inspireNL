@@ -34,11 +34,10 @@ class geometryHelper(object):
         :param fromCRS: the CRSid of xy
         :return: QGSpoint in the CRS of mapCanvas.
         """
-        point = QgsPoint( xy[0], xy[1] )
         fromCrs = QgsCoordinateReferenceSystem(fromCRS)
-        toCrs = self.getGetMapCrs(self.iface)
-        xform = QgsCoordinateTransform( fromCrs, toCrs )
-        return   xform.transform( point )
+        toCrs =   self.iface.mapCanvas().mapSettings().destinationCrs() 
+        xform =   QgsCoordinateTransform( fromCrs, toCrs, QgsProject.instance() )
+        return    xform.transform( xy[0], xy[1] )
     
     def prjPtFromMapCrs( self, xy , toCRS=31370 ):
         """Project point xy from the CRS of mapCanvas to toCrs.
@@ -47,11 +46,10 @@ class geometryHelper(object):
         :param toCRS: the CRSid of xy
         :return: QGSpoint in toCRS.
         """
-        point = QgsPoint( xy[0], xy[1] )
         toCrs = QgsCoordinateReferenceSystem(toCRS)
-        fromCrs = self.getGetMapCrs(self.iface)
-        xform = QgsCoordinateTransform( fromCrs, toCrs )
-        return   xform.transform( point )
+        fromCrs = self.iface.mapCanvas().mapSettings().destinationCrs() 
+        xform = QgsCoordinateTransform( fromCrs, toCrs, QgsProject.instance() )
+        return   xform.transform( xy[0], xy[1] )
 
     def prjLineFromMapCrs(self, lineString, toCRS=4326 ):
         """Project lineString from the CRS of mapCanvas to toCrs.
@@ -60,9 +58,9 @@ class geometryHelper(object):
         :param toCRS: the CRSid of xy
         :return: QgsGeometry in toCrs
         """
-        fromCrs = self.getGetMapCrs(self.iface)
+        fromCrs = self.iface.mapCanvas().mapSettings().destinationCrs() 
         toCrs = QgsCoordinateReferenceSystem(toCRS)
-        xform = QgsCoordinateTransform(fromCrs, toCrs)
+        xform = QgsCoordinateTransform(fromCrs, toCrs, QgsProject.instance())
         wgsLine = [ xform.transform( xy ) for xy in  lineString.asPolyline()]
         return QgsGeometry.fromPolyline( wgsLine )
 
@@ -74,8 +72,8 @@ class geometryHelper(object):
         :return: QgsGeometry in toCrs
         """
         fromCrs = QgsCoordinateReferenceSystem(fromCRS)
-        toCrs = self.getGetMapCrs(self.iface)
-        xform = QgsCoordinateTransform(fromCrs, toCrs)
+        toCrs = self.iface.mapCanvas().mapSettings().destinationCrs() 
+        xform = QgsCoordinateTransform(fromCrs, toCrs, QgsProject.instance() )
         if isinstance(lineString, QgsGeometry):
             wgsLine = [ xform.transform( xy ) for xy in  lineString.asPolyline()]
         if hasattr(lineString, '__iter__'):

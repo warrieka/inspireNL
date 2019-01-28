@@ -14,8 +14,9 @@
 #
 import os, sys
 #sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, "/home/kay/prj/")
 
+sys.path.insert(0, r'C:\Users\sa64489\Documents\GitHub\ptvs_geopunt' )
+sys.path.insert(0, r'C:\OSGeo4W64\apps\qgis\python' )
 # -- Project information -----------------------------------------------------
 
 project = u'De Nederlandse INSPIRE QGIS plugin'
@@ -23,9 +24,9 @@ copyright = u'2018, Kay Warrie'
 author = u'Kay Warrie'
 
 # The short X.Y version
-version = u'2.2'
+version = u'2.3'
 # The full version, including alpha/beta/rc tags
-release = u'Version 2.2 for QGIS 3'
+release = u'Version 2.3 for QGIS 3'
 
 
 # -- General configuration ---------------------------------------------------

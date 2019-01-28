@@ -6,16 +6,22 @@ qgisMinimumVersion=3.0
 description= EN: A tool to query INSPIRE datasets of the Dutch national dataportal "National Georegistry (NGR)" and add it to QGIS. 
     NL: Een tool om de INSPIRE datasets uit het Nationaal Georegister te bevragen en toe te voegen aan QGIS.
 
-version=2.2
+version=2.3
 author=Kay Warrie
 email=kaywarrie@gmail.com
 
-about= In Nederland zijn inmiddels zijn meer dan 350 datasets en bijbehorende services geregistreerd in het Nationaal Georegister (http://www.nationaalgeoregister.nl/)  als INSPIRE dataset of service. Om het gebruik te vergemakkelijken voor de professionele GIS-gebruikers in Nederland worden voor de twee meest gebruikte GIS software pakketten – te weten QGIS en ArcGIS Desktop – plugins ontwikkeld. 
-    Deze plugins maken het gemakkelijk om direct via het Nationaal Georegister de INSPIRE datasets en services te vinden, te raadplegen en te downloaden. Deze plugin is de QGIS-versie.
+about=In het kader van INSPIRE realiseren de Europese lidstaten een digitaal netwerk voor het uitwisselen van gegevens over de leefomgeving. INSPIRE zorgt ervoor dat deze geo-informatie van goede kwaliteit is en dat de inhoud ervan, ook over de landsgrenzen heen, op elkaar is afgestemd. In Nederland zijn inmiddels beschrijvingen van meer dan 200 INSPIRE datasets en circa 265 bijbehorende services aanwezig in het Nationaal Georegister (http://www.nationaalgeoregister.nl/).
+    Om het gebruik van INSPIRE data te vergemakkelijken voor de professionele GIS-gebruikers in Nederland is voor QGIS een plugin ontwikkeld. Deze plugin maakt het gemakkelijk om direct via het Nationaal Georegister de INSPIRE datasets en services te vinden, te raadplegen en te downloaden. Via de plugin kan een gebruiker INSPIRE-data zoeken op trefwoord, INSPIRE-thema, organisatie of type service en het gevonden resultaat direct toevoegen aan QGIS.
+    De INSPIRE QGIS plugin is tot stand gekomen onder verantwoordelijkheid van Geonovum. Geonovum ondersteunt het ministerie van Binnenlandse Zaken en Koninkrijkrelaties en dataproviders bij de invoering van INSPIRE in Nederland. De plugin is ontwikkeld door KGIS (http://kgis.be/).
 
+Heeft u vragen over INSPIRE of de plugin, kijk dan op https://www.geonovum.nl/geo-standaarden/inspire-europese-leefomgeving of stel ze aan de INSPIRE helpdesk (inspire@geonovum.nl).  
 # Optional items:
 # Uncomment the following line and add your changelog entries:
-changelog=Migratie naar QGIS 3
+changelog=- Migratie naar QGIS 3
+    - Alle calls zijn nu gebasserd op OGC-standaarden 
+    - Downloaden met atom-links kan toont nu lijst indien meerdere bestanden. 
+    - Optie om WFS te downloaden binnen huidig kaartbeeld. 
+    - Verbetering werking WFS en WCS, ondersteuning versie 2.0.0 
 
 # Tags are comma separated with spaces allowed
 tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister

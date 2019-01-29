@@ -5,11 +5,11 @@ from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, 
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
 from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsWkbTypes 
 from qgis.gui import QgsMessageBar
-import sys, os, webbrowser, json
 from . import geometryhelper as gh
 from .settings import settings
 from . import metadataParser as metadata
 from .metadataParser import MDReader, MDdata, getWmsLayerNames, getWFSLayerNames, makeWFSuri, getWMTSlayersNames, makeWMTSuri,  getWCSlayerNames, makeWCSuri
+import sys, os, webbrowser, json
 
 class dataCatalog(QDialog):
     """The dialog for the catalog searchwindow

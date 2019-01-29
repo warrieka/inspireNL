@@ -1,13 +1,26 @@
 INSPIRE Nederland plugin voor QGIS
 ====
 
-*Het Nationaal Georegister (NGR) is dé centrale voorziening voor het beschrijven en ontsluiten van geo-informatie van Nederland. Het NGR bevat het overzicht van beschikbare datasets en services. Vele van deze datasets beschikken over services die u in QGIS kunt toevoegen. De bedoeling van deze plugin is om het opzoeken en toevoegen aan QGIS als te vergemakkelijken door het aan te bieden geintegreerd QGIS.*
+About the Dutch INSPIRE QGIS plugin
+-----------------------------------
 
-De INSPIRE-implementatie in Nederland komt nu in een fase waarin het niet langer alleen maar gaat om het aanbod en om het tijdig voldoen aan de Europese wettelijke verplichtingen. Nu een toenemend aantal INSPIRE datasets en services ook daadwerkelijk beschikbaar begint te komen, wordt aandacht voor het gebruik en de toepassing ervan geleidelijk aan steeds actueler en belangrijker. 
+In the context of INSPIRE, the European member states are realizing a digital network for the exchange of data on the living environment. INSPIRE ensures that this geo-information is of good quality and that its content, even across national borders, is coordinated. In the Netherlands, descriptions of more than 200 INSPIRE datasets and approximately 265 associated services are now available in the National Georegister (http://www.nationaalgeoregister.nl/).
 
-Daarnaast is van belang dat de INSPIRE-implementatie niet op zichzelf staat, maar plaatsvindt in een context waarin ook allerlei andere zaken en ontwikkelingen spelen, waar samenhang mee aanwezig is, afstemming mee dient plaats te vinden en waar actieve aandacht voor het opsporen en waar mogelijk benutten van synergie aan de orde is. Inmiddels zijn meer dan 350 datasets en bijbehorende services geregistreerd in het nationaal georegister geregistreerd als INSPIRE dataset of service. 
+To facilitate the use of INSPIRE data for the professional GIS users in the Netherlands, a plugin has been developed for QGIS. This plugin makes it easy to find, consult and download the INSPIRE datasets and services directly via the National Georegister. Through the plugin, a user can search INSPIRE data by keyword, INSPIRE theme, organization or type of service and add the result directly to QGIS.
 
-Om het gebruik te vergemakkelijken voor de professionele GIS-gebruikers in Nederland worden voor twee meest gebruikte GIS software pakketten – te weten QGIS en ArcGIS Desktop – plugins ontwikkeld. Deze plugins maken het makkelijk om direct via het Nationaal Georegister (http://www.nationaalgeoregister.nl/) de INSPIRE datasets en services te vinden, te raadplegen en te downloaden. Deze plugin is de QGIS-versie.
+The INSPIRE QGIS plugin was created under the responsibility of Geonovum. Geonovum supports the Ministry of the Interior and Kingdom Relations and data providers with the introduction of INSPIRE in the Netherlands. The plugin has been developed by KGIS (http://kgis.be/).
 
+If you have any questions about INSPIRE or the plugin, please visit https://www.geonovum.nl/geo-standaarden/inspire-europese-leefomgeving or submit them to the INSPIRE helpdesk (inspire@geonovum.nl).
+
+Over de Nederlandse INSPIRE QGIS plugin
+----------------------------------------
+
+In het kader van INSPIRE realiseren de Europese lidstaten een digitaal netwerk voor het uitwisselen van gegevens over de leefomgeving. INSPIRE zorgt ervoor dat deze geo-informatie van goede kwaliteit is en dat de inhoud ervan, ook over de landsgrenzen heen, op elkaar is afgestemd. In Nederland zijn inmiddels beschrijvingen van meer dan 200 INSPIRE datasets en circa 265 bijbehorende services aanwezig in het Nationaal Georegister (http://www.nationaalgeoregister.nl/).
+
+Om het gebruik van INSPIRE data te vergemakkelijken voor de professionele GIS-gebruikers in Nederland is voor QGIS een plugin ontwikkeld. Deze plugin maakt het gemakkelijk om direct via het Nationaal Georegister de INSPIRE datasets en services te vinden, te raadplegen en te downloaden. Via de plugin kan een gebruiker INSPIRE-data zoeken op trefwoord, INSPIRE-thema, organisatie of type service en het gevonden resultaat direct toevoegen aan QGIS.
+
+De INSPIRE QGIS plugin is tot stand gekomen onder verantwoordelijkheid van Geonovum. Geonovum ondersteunt het ministerie van Binnenlandse Zaken en Koninkrijkrelaties en dataproviders bij de invoering van INSPIRE in Nederland. De plugin is ontwikkeld door KGIS (http://kgis.be/).
+
+Heeft u vragen over INSPIRE of de plugin, kijk dan op https://www.geonovum.nl/geo-standaarden/inspire-europese-leefomgeving of stel ze aan de INSPIRE helpdesk (inspire@geonovum.nl).
 
 

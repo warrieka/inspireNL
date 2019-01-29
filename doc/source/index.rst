@@ -2,50 +2,23 @@
 The Dutch INSPIRE QGIS plugin Technical Documentation
 ======================================================
 
+*A QGIS plugin to search and add Datasets of the Dutch Dataportal 'Nationaal Georegister' to QGIS.*
+
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
- 
    
-.. automodule:: inspireNL
+   About
+   Usage
+   Contributing and forking
+   Changelog
+   Modules and Classes
    
-Classes
--------
 
-inspireNL
-^^^^^^^^^
-.. automodule:: inspireNL.inspireNL
-   :members: 
+   
 
-inspireNLabout
-^^^^^^^^^^^^^^
-.. automodule:: inspireNL.inspireNLabout
-   :members: 
-   
-dataCatalog
-^^^^^^^^^^^
-.. automodule:: inspireNL.dataCatalog
-   :members: 
-   
-geometryhelper
-^^^^^^^^^^^^^^
-.. automodule:: inspireNL.geometryhelper
-   :members: 
-
-metadataParser
-^^^^^^^^^^^^^^
-.. automodule:: inspireNL.metadataParser
-   :members: 
-
-settings
-^^^^^^^^
-.. automodule:: inspireNL.settings
-   :members: 
-   
-   
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-
+* :ref:`search`

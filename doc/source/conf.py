@@ -19,8 +19,8 @@ sys.path.insert(0, r'C:\Users\sa64489\Documents\GitHub\ptvs_geopunt' )
 sys.path.insert(0, r'C:\OSGeo4W64\apps\qgis\python' )
 # -- Project information -----------------------------------------------------
 
-project = u'De Nederlandse INSPIRE QGIS plugin'
-copyright = u'2018, Kay Warrie'
+project = u'The Dutch INSPIRE QGIS plugin'
+copyright = u'2019, Kay Warrie'
 author = u'Kay Warrie'
 
 # The short X.Y version
@@ -80,13 +80,13 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {'collapsiblesidebar': True, 'bgcolor': 'white' }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -107,7 +107,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'deNederlandseINSPIREQGISplugindoc'
+htmlhelp_basename = 'INSPIRE_QGIS_plugin_doc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -134,7 +134,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'deNederlandseINSPIREQGISplugin.tex', u'de Nederlandse INSPIRE QGIS plugin Documentation',
+    (master_doc, 'Dutch_INSPIRE_QGIS_plugin.tex',  project,
      u'Kay Warrie', 'manual'),
 ]
 
@@ -144,7 +144,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'denederlandseinspireqgisplugin', u'de Nederlandse INSPIRE QGIS plugin Documentation',
+    (master_doc, 'denederlandseinspireqgisplugin', project,
      [author], 1)
 ]
 
@@ -155,7 +155,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'deNederlandseINSPIREQGISplugin', u'de Nederlandse INSPIRE QGIS plugin Documentation',
+    (master_doc, 'deNederlandseINSPIREQGISplugin', project,
      author, 'deNederlandseINSPIREQGISplugin', 'One line description of project.',
      'Miscellaneous'),
 ]

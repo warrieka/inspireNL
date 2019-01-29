@@ -2,6 +2,8 @@
 import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime, json
 import xml.etree.ElementTree as ET
 
+CSW_URL = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire"
+
 class MDdata(object):
     """Parse a CSW-metadataXML 
     
@@ -101,7 +103,7 @@ class MDReader(object):
     """
     def __init__(self, proxyUrl=None, timeout=15 ):
         self.timeout = timeout
-        self.geoNetworkUrl = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/" 
+        self.geoNetworkUrl =  CSW_URL
 
         self.dataTypes = [["Dataset", "dataset"],["Service","service"]]
         self.inspireServiceTypes = ["discovery","download","view","other"]
@@ -113,7 +115,7 @@ class MDReader(object):
              self.opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
         
     def _createFindUrl(self, q="", start=1, maxRecords=100, orgName='', dataType='', inspiretheme='', inspireServiceType=''): 
-        url = self.geoNetworkUrl + "inspire?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
+        url = self.geoNetworkUrl + "?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
         
         data = {}
         
@@ -168,7 +170,7 @@ class MDReader(object):
         
         :return: a list with the Keywords
         """
-        url1 = self.geoNetworkUrl + "inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
+        url1 = self.geoNetworkUrl + "?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
         try:
             if self.opener: 
                 response1 = self.opener.open(url1, timeout=self.timeout)
@@ -190,7 +192,7 @@ class MDReader(object):
         :return: a list with the organisations
         """
         
-        url = self.geoNetworkUrl + 'inspire?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
+        url = self.geoNetworkUrl + '?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
 
         try:
             if self.opener: response = self.opener.open(url, timeout=self.timeout)
@@ -259,7 +261,8 @@ class metaError(Exception):
         return repr(self.message)
    
 def getWmsLayerNames( url, proxyUrl='', timeout=5):
-    """
+    """List all the thr layers in a WMS
+    
     :param url: the getcapabilities url of the WMS
     :param proxyUrl: the url of the network proxy 
     :param timeout:  the timeout for internet calls
@@ -291,7 +294,8 @@ def getWmsLayerNames( url, proxyUrl='', timeout=5):
     return layerNames
 
 def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
-    """
+    """List all the layers in a WFS
+    
     :param url: the getcapabilities url of the WFS
     :param proxyUrl: the url of the network proxy 
     :param timeout:  the timeout for internet calls
@@ -356,7 +360,8 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
     return { 'version': version, 'layerNames': layerNames }
 
 def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
-    """
+    """List all the layers in a WMTS
+    
     :param url: the getcapabilities url of the WCS
     :param proxyUrl: the url of the network proxy 
     :param timeout:  the timeout for internet calls
@@ -400,7 +405,8 @@ def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
     return layerNames
 
 def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1", timeout=5 ):
-    """
+    """List all the layers in a WFS
+    
     :param url: the getcapabilities url of the WCS
     :param proxyUrl: the url of the network proxy 
     :param wcs_version: the version of WCS to use, supported versions: 2.0, 1.1, 1.0
@@ -442,6 +448,7 @@ def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1", timeout=5 ):
 
 def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
     """Make a QGIS-uri to load WFS-services.
+    
     :param url: the base url of the wfs
     :param name: The name of the layer
     :param srsname: the crs as a string,this form <auth>:<id>, like EPSG:28992
@@ -460,6 +467,7 @@ def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
 
 def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', format='image/png' ):
     """Make a QGIS-uri to load WMTS-services.
+    
     :param url: the base url of the WMTS
     :param name: The name of the layer
     :param tileMatrixSet: The namae of the tileMatrixSet to use
@@ -482,6 +490,7 @@ def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', form
 
 def makeWCSuri( url, layer ):  
     """Make a QGIS-uri to load WCS-services.
+    
     :param url: the base url of the WMTS
     :param layer: The name of the layer
 
@@ -495,8 +504,8 @@ def makeWCSuri( url, layer ):
     return uri 
       
 def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
-    """
-    Test if a WFS has complex features for a specific typeName
+    """Test if a WFS has complex features for a specific layer (typeName)
+    
     :param url: the url of the WFS
     :param typeName: the typeName of the layer to test for complex features
     :param version: WFS version: 1.1.0 or 2.0.0
@@ -540,8 +549,8 @@ def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
         return False
     
 def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, version="1.1.0", bbox=[], proxyUrl='', timeout=5):
-    """
-    Download a WFS as GML-file for a specific area
+    """Download a WFS as GML-file for a specific area
+    
     :param url: the url of the WFS
     :param typeName: the typeName of the layer to download
     :param outputLocation: the path and filename of the output gml

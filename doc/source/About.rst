@@ -1,7 +1,7 @@
 About   
 =====
 
-*A QGIS plugin to search and add Datasets of the Dutch Dataportal 'Nationaal Georegister' to QGIS.*
+*A QGIS plugin to search and add the INSPIRE Datasets of the Dutch Dataportal 'Nationaal Georegister' to QGIS.*
 
 **About the Dutch INSPIRE QGIS plugin**
 

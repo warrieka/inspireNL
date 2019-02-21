@@ -12,8 +12,8 @@ class MDdata(object):
     :param timeout: the timeout for internet calls
     """
     def __init__(self, metadataXML, proxyUrl=None, timeout=5):
-        #self._proxy = proxyUrl
-        #self._timeout = timeout
+        self._proxy = proxyUrl
+        self._timeout = timeout
         self.count = 0 if not metadataXML else int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         self.records = []
 
@@ -78,9 +78,9 @@ class MDdata(object):
                 proxy = urllib.request.ProxyHandler({'http': self._proxy})
                 auth = urllib.request.HTTPBasicAuthHandler()
                 opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-                response =  opener.open(atom, timeout=5)
+                response =  opener.open(atom, timeout=self._timeout)
             else:
-                response =  urllib.request.urlopen(atom, timeout=5)   
+                response =  urllib.request.urlopen(atom, timeout=self._timeout)   
         except:
             return []
         

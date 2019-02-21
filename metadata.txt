@@ -27,7 +27,7 @@ changelog=- Migratie naar QGIS 3
 tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister
 
 # webpages
-homepage=http://pdok-ngr.readthedocs.org/nl/latest/services.html#inspire-metadata
+homepage=https://pdok-ngr.readthedocs.io/
 tracker=https://github.com/warrieka/inspireNL/issues
 repository=https://github.com/warrieka/inspireNL
 icon=images/icon.png

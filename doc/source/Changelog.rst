@@ -3,7 +3,7 @@ Changelog
 
 Version 2.3
 ------------
-- Option to donwload WFS instead  of loading as a service.
+- Option to download WFS instead  of loading as a service.
 - Handle complex features in WFS better. 
 - Various small bugfixes as reported by users.
 - Improved documentation. 

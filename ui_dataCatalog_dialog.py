@@ -270,7 +270,7 @@ class Ui_dataCatalogDlg(object):
         self.organisatiesLbl.setText(_translate("dataCatalogDlg", "Organisatie:"))
         self.dlGMLchk.setStatusTip(_translate("dataCatalogDlg", "WFS donwloaden binnen huidig kaartbeeld als een bestand en niet inladen als een service. "))
         self.dlGMLchk.setWhatsThis(_translate("dataCatalogDlg", "WFS donwloaden binnen huidig kaartbeeld als een bestand en niet inladen als een service. "))
-        self.dlGMLchk.setText(_translate("dataCatalogDlg", "WFS donwloaden binnen huidig kaartbeeld"))
+        self.dlGMLchk.setText(_translate("dataCatalogDlg", "WFS downloaden binnen huidig kaartbeeld"))
         self.label.setText(_translate("dataCatalogDlg", "Enkel resultaten met:"))
         self.modelFilterCbx.setItemText(0, _translate("dataCatalogDlg", "Alle lagen"))
         self.modelFilterCbx.setItemText(1, _translate("dataCatalogDlg", "WMS"))

@@ -305,7 +305,7 @@
           <string>WFS donwloaden binnen huidig kaartbeeld als een bestand en niet inladen als een service. </string>
          </property>
          <property name="text">
-          <string>WFS donwloaden binnen huidig kaartbeeld</string>
+          <string>WFS downloaden binnen huidig kaartbeeld</string>
          </property>
         </widget>
        </item>

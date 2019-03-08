@@ -567,8 +567,12 @@ def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, 
     
     if version == "1.1.0": countStr = "maxFeatures"
     if version == "2.0.0": countStr = "count"
-    if bbox: bboxS = ",".join([str(n) for n in bbox])
-    
+    # Thijs Brentjens, suggestiont for workaround different axis order for 4258, 4326
+    # TODO: which CRSes should take into account different axis order for WFS download?
+    if 'http://www.opengis.net/def/crs/EPSG' in crs and ('4258' in crs or '4326' in crs) and bbox:
+        bboxS = str(bbox[1])+','+str(bbox[0])+','+str(bbox[3])+','+str(bbox[2])
+    elif bbox: bboxS = ",".join([str(n) for n in bbox])
+
     baseUrl = url.split("?")[0] 
     qryString = "?{}={}&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&TYPENAME={}&srsName={}&bbox={}".format(
                                                             countStr, maxCount, version, typeName, crs, bboxS) 

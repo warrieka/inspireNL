@@ -5,7 +5,7 @@ Installation
 -------------
 
 You can find the tool in the standard QGIS-plugin repo.
-On the menubar: **Plugins > Manage and Install Plugins .. > All** search for *INSPIRE nederland* and click *install plugin*. You can also download a specifiec version from Github_ and install de plugin from zipfile. For  :ref:`Contribute` or testing a new version of the plugin then you can use this method. 
+On the menubar: **Plugins > Manage and Install Plugins .. > All** search for *INSPIRE nederland* and click *install plugin*. You can also download a specific version from Github_ and install de plugin from zipfile. For  :ref:`Contribute` or testing a new version of the plugin then you can use this method. 
 
 .. _Github: https://github.com/warrieka/inspireNL/releases/
 

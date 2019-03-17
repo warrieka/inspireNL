@@ -338,7 +338,7 @@ class dataCatalog(QDialog):
        :param wfsVersion: 2.0.0 or 1.1.0
        :param layerName: the typeName of the layer in  the WFS
         """
-        title = "Opslaan als GML voor huid kaartbeeld"
+        title = "Opslaan als GML voor huidig kaartbeeld"
         fileName, _ = QFileDialog.getSaveFileName(self.iface.mainWindow(), title, None ,"GML (*.gml)")
 
         if not fileName: return

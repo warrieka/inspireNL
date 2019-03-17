@@ -115,8 +115,7 @@ class MDReader(object):
              self.opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
         
     def _createFindUrl(self, q="", start=1, maxRecords=100, orgName='', dataType='', inspiretheme='', inspireServiceType=''): 
-        url = self.geoNetworkUrl + "?request=GetRecords&service=CSW&version=2.0.2&elementsetname=full&typenames=gmd:MD_Metadata&RESULTTYPE=results&&constraintLanguage=CQL_TEXT&constraint_language_version=1.1.0&"
-        
+        url = self.geoNetworkUrl 
         data = {}
         
         #escape '-sign's in CQL 
@@ -128,7 +127,7 @@ class MDReader(object):
         CQLparts = []
         
         if inspiretheme: 
-            CQLparts.append(" (Subject LIKE '"+ inspiretheme +"' AND AnyText = 'GEMET - INSPIRE themes, version 1.0') ")
+            CQLparts.append("(Subject LIKE '%"+ inspiretheme +"%' AND AnyText = 'GEMET - INSPIRE themes, version 1.0')")
         if len(q.strip()) > 0: 
             CQLparts.append(" AnyText LIKE '%" + q + "%' ")
         if orgName: 
@@ -138,14 +137,23 @@ class MDReader(object):
         if inspireServiceType: 
             CQLparts.append(" ServiceType = '" + inspireServiceType + "' ")
 
-        CQL = "( " + " AND ".join(CQLparts) + " )"
+        CQL = "(" + " AND ".join(CQLparts) + ")"
 
-        data["constraint"] = CQL
+        data["request"] = "GetRecords"
+        data["service"] = "CSW"
+        data["version"] = "2.0.2"
+        data["elementsetname"] = "full"
+        data["typenames"] = "gmd:MD_Metadata"
+        data["RESULTTYPE"] = "results"
+        data["constraintLanguage"] = "CQL_TEXT"
+        data["constraint_language_version"] = "1.1.0"          
         data["maxRecords"] = maxRecords
         data["startPosition"] = start
+        data["constraint"] = CQL
                 
         values = urllib.parse.urlencode(data)
-        return url + values
+
+        return url +"?"+ values
           
     def list_inspire_theme(self):
         """List the inspire-themes
@@ -221,6 +229,7 @@ class MDReader(object):
         """
 
         url = self._createFindUrl( q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
+
         if self.opener: response = self.opener.open(url, timeout=self.timeout)
         else: response = urllib.request.urlopen(url, timeout=self.timeout)
         result = ET.parse(response)
@@ -302,7 +311,7 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
     
     :return: a list of tuples in de form: [(name, title, srs ), ...]
     """
-    capability = url.split("?")[0] + "?request=GetCapabilities&version=1.0.0&service=wfs"
+    capability = url.split("?")[0] + "?request=GetCapabilities&version=2.0.0&service=wfs"
     if proxyUrl:
         proxy = urllib.request.ProxyHandler({'http': proxyUrl})
         auth = urllib.request.HTTPBasicAuthHandler()
@@ -315,7 +324,7 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
     layerNames=[]
     
     #default
-    version = "1.0.0"
+    version = "2.0.0"
     serv = result.find(".//{http://www.opengis.net/ows/1.1}ServiceTypeVersion")
 
     if serv is None: 

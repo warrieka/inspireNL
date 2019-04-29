@@ -9,7 +9,7 @@ from . import geometryhelper as gh
 from .settings import settings
 from . import metadataParser as metadata
 from .metadataParser import MDReader, MDdata, getWmsLayerNames, getWFSLayerNames, makeWFSuri, getWMTSlayersNames, makeWMTSuri,  getWCSlayerNames, makeWCSuri
-import sys, os, webbrowser, json
+import sys, os, webbrowser, json, urllib
 
 class dataCatalog(QDialog):
     """The dialog for the catalog searchwindow
@@ -311,15 +311,14 @@ class dataCatalog(QDialog):
        :return: True if user wants to download else false.
        """
        msg = """
-       Deze laag kon niet correct ingeladen worden als WFS-laag, het vermoedelijk gaat om een service met complexe features.<br/>
-       U kunt de laag downloaden voor het huidge kaartbeeld als GML. Mogelijk worden ook dan niet alle gegeven correct waergegeven. 
+       Deze laag kon niet correct ingeladen worden als WFS-laag, omdat het vermoedelijk gaat om een service met complexe features.<br/>
+       U kunt de laag downloaden voor het huidige kaartbeeld als GML. Mogelijk worden ook dan niet alle gegevens correct weergegeven.
        
-       <br/><br/>U kunt eventueel de plugin 
-       <a href='https://plugins.qgis.org/plugins/gml_application_schema_toolbox'>GML Application Schema Toolbox</a>
-       installeren een WFS die complexe features correcter te raadplegen." 
+       <br/><br/>U kunt eventueel de plugin <a href='https://plugins.qgis.org/plugins/gml_application_schema_toolbox'>
+       GML Application Schema Toolbox</a> installeren, een plugin die GML met complexe features kan laden. 
        Na installatie, vindt u deze tool op de menubalk onder: <strong>Plugins > QGIS GML Application Schema Toolbox > Wizard</strong>
         
-       <br/><br/> Wilt u in de plaats proberen deze laag te downloaden vor het huidge kaartbeeld en in te laden? 
+       <br/><br/>Klik op <em>Ja/Yes</em> als u wilt proberen deze laag te downloaden voor het huidige kaartbeeld en vervolgens in te laden? 
        """
        
        buttonDlg = QMessageBox.warning(self.iface.mainWindow(), "Kan features niet correct lezen.", 
@@ -358,7 +357,21 @@ class dataCatalog(QDialog):
         
         bbox = [ eMin.x(), eMin.y(), eMax.x(), eMax.y() ]
         metadata.downloadWFS(url, layerName, fileName, crs, 50000, wfsVersion, bbox, self.s.proxyUrl, 120)
-        layer = self.iface.addVectorLayer(fileName , layerName, "ogr")
+        
+        if metadata.xmlIsEmpty( fileName ):
+            with open(fileName, 'r') as file:
+                xmlStr = file.read() 
+           
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("<strong>De GML-file bevat geen data:</strong><br/> Wellicht is er geen intersecterende data.")
+            msg.setWindowTitle("Geen geldige GML-file")
+            msg.setDetailedText(xmlStr)
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
+
+        else:
+            self.iface.addVectorLayer(fileName , layerName, "ogr")
              
 
     def addWMTS(self):
@@ -431,16 +444,27 @@ class dataCatalog(QDialog):
             return
         
         if len(self.dl) == 1:
-            self.openUrl( self.dl[0][1] )
-            return
+            layerTitle = self.dl[0][0] 
+            dlName =  self.dl[0][1] 
+        else: 
+            layerTitle, accept = QInputDialog.getItem(self, "Laag downloaden", 
+                                "Kies een download", [n[0] for n in self.dl], editable=0)
+            if not accept: 
+                return
+            else:
+                dlName = [n[1] for n in self.dl if n[0] == layerTitle ][0]
         
-        layerTitle, accept = QInputDialog.getItem(self, "Laag downloaden", 
-                              "Kies een download", [n[0] for n in self.dl], editable=0)
-        if not accept: 
-            return
-    
-        dlName = [n[1] for n in self.dl if n[0] == layerTitle ][0]
-        self.openUrl( dlName )
+        file_name, file_ext = os.path.splitext( os.path.basename( dlName ).split("?")[0] )
+        if file_ext == "": 
+            file_name = layerTitle + ".xml"
+            file_ext =  ".xml"
+        
+        flname = os.path.join( os.path.expanduser("~") , file_name )
+        
+        fileName, _ = QFileDialog.getSaveFileName(self,"Opslaan als", flname, "{0} (*{0});;All Files (*)".format(file_ext) )
+        if fileName:
+           urllib.request.urlretrieve(dlName, fileName)
+
   
     def clean(self):
         """Reset the UI to initial positions"""

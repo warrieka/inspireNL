@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Version 2.5
+-----------
+- Further improved WFS with exotic CRS
+- Improved Download-function: no longer use webbrowser.
+- Changed some maessages a request of customer
+
+Version 2.4
+-----------
+- Improved WFS CRS handling including working with inverted axis.
+- User notificaton improvements.
+- Spell fixes. 
+
 Version 2.3
 ------------
 - Option to download WFS instead  of loading as a service.

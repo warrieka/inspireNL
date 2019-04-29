@@ -24,9 +24,9 @@ copyright = u'2019, Kay Warrie'
 author = u'Kay Warrie'
 
 # The short X.Y version
-version = u'2.3'
+version = u'2.5'
 # The full version, including alpha/beta/rc tags
-release = u'Version 2.3 for QGIS 3'
+release = u'Version 2.5 for QGIS 3'
 
 
 # -- General configuration ---------------------------------------------------

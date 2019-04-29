@@ -68,7 +68,7 @@ class MDdata(object):
             return []
         
         if len(links) > 0 and len(atoms) == 0: 
-            results = [[n.attrib["name"], n.text ] for n in links]
+            results = [ [ n.attrib["name"] if "name" in n.attrib else n.text , n.text ] for n in links ]
             return results
     
         atom = atoms[0]
@@ -554,7 +554,7 @@ def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
         return False
             
     except:
-        print("Error in finding out WFS-complex:" + str( sys.exc_info()[1] ) )
+        print("Error in finding out WFS-complex:" + str( sys.exc_info() ) )
         return False
     
 def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, version="1.1.0", bbox=[], proxyUrl='', timeout=5):
@@ -574,21 +574,25 @@ def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, 
     if version not in ["1.1.0", "2.0.0"]: 
         version = "1.1.0"
     
-    if version == "1.1.0": countStr = "maxFeatures"
-    if version == "2.0.0": countStr = "count"
+    if version == "1.1.0": 
+        typeNameStr = "TYPENAME"
+        countStr = "maxFeatures"
+    if version == "2.0.0":
+        typeNameStr = "TYPENAMES"
+        countStr = "count"
     if bbox: bboxS = ",".join([str(n) for n in bbox])
     
     # Thijs Brentjens, suggestiont for workaround different axis order for 4258, 4326
     # TODO: which CRSes should take into account different axis order for WFS download?
-    if 'http://www.opengis.net/def/crs/EPSG' in crs and ('4258' in crs or '4326' in crs) and bbox:
-        bboxS = str(bbox[1])+','+str(bbox[0])+','+str(bbox[3])+','+str(bbox[2])
-    elif bbox: bboxS = ",".join([str(n) for n in bbox])
+    if 'EPSG' in crs and ('4258' in crs or '4326' in crs) and bbox:
+        bboxS = str(bbox[1])+','+str(bbox[0])+','+str(bbox[3])+','+str(bbox[2])  
+    elif bbox: bboxS = ",".join([str(n) for n in bbox])  
     
     baseUrl = url.split("?")[0] 
-    qryString = "?{}={}&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&TYPENAME={}&srsName={}&bbox={}".format(
-                                                            countStr, maxCount, version, typeName, crs, bboxS) 
+    qryString = "?{}={}&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&{}={}&srsName={}&bbox={}".format(
+                                                countStr, maxCount, version, typeNameStr, typeName, crs, bboxS) 
     fullUrl = baseUrl + qryString
-    
+
     if proxyUrl:
         proxy =  urllib.request.ProxyHandler({'http': proxyUrl})
         auth =   urllib.request.HTTPBasicAuthHandler()
@@ -596,12 +600,27 @@ def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, 
         response = opener.open(fullUrl, timeout=timeout)
     else:
         response = urllib.request.urlopen(fullUrl, timeout=timeout)
-    
+        
     with response, open(outputLocation, 'wb') as out_file:
         data = response.read() 
         out_file.write(data)
-        
+
     return outputLocation
     
+def xmlIsEmpty(xml_file, gmlException=True):
+    """test if a xml file contais data
     
+    :param xml_file: a path to a xml file. 
+    :param gmlException: also return if gmlException
     
+    return: True if empty else False
+    """
+    try:
+        tree = ET.parse(xml_file)  
+        root = tree.getroot()
+        if gmlException and "ExceptionReport" in root.tag:
+            return True
+        
+        return not len(root)
+    except:
+        return True

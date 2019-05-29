@@ -6,7 +6,7 @@ qgisMinimumVersion=3.0
 description= EN: A tool to query INSPIRE datasets of the Dutch national dataportal "National Georegistry (NGR)" and add it to QGIS. 
     NL: Een tool om de INSPIRE datasets uit het Nationaal Georegister te bevragen en toe te voegen aan QGIS.
 
-version=2.5
+version=2.6
 author=Kay Warrie
 email=kaywarrie@gmail.com
 
@@ -27,7 +27,7 @@ changelog=- Migratie naar QGIS 3
 tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister
 
 # webpages
-homepage=https://pdok-ngr.readthedocs.io/
+homepage=https://www.geonovum.nl/geo-standaarden/inspire-europese-leefomgeving/qgis-plug
 tracker=https://github.com/warrieka/inspireNL/issues
 repository=https://github.com/warrieka/inspireNL
 icon=images/icon.png

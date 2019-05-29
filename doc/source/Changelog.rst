@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Version 2.6
+-----------
+- Production release
+
 Version 2.5
 -----------
 - Further improved WFS with exotic CRS

@@ -1,0 +1,555 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>inspireNL.dataCatalog &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <script src="../../_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.dataCatalog</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for inspireNL.dataCatalog</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">qgis.PyQt.QtCore</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Qt</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="p">,</span> <span class="n">QUrl</span><span class="p">,</span>
+                                 <span class="n">QSortFilterProxyModel</span><span class="p">,</span> <span class="n">QRegExp</span><span class="p">,</span> <span class="n">QStringListModel</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qgis.PyQt.QtGui</span> <span class="kn">import</span> <span class="n">QCursor</span><span class="p">,</span> <span class="n">QStandardItemModel</span><span class="p">,</span> <span class="n">QStandardItem</span>
+<span class="kn">from</span> <span class="nn">qgis.PyQt.QtWidgets</span> <span class="kn">import</span> <span class="p">(</span><span class="n">QApplication</span><span class="p">,</span> <span class="n">QDialog</span><span class="p">,</span> <span class="n">QSizePolicy</span><span class="p">,</span> <span class="n">QCompleter</span><span class="p">,</span> <span class="n">QInputDialog</span><span class="p">,</span> 
+                                                                    <span class="n">QMessageBox</span><span class="p">,</span> <span class="n">QFileDialog</span> <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.ui_dataCatalog_dialog</span> <span class="kn">import</span> <span class="n">Ui_dataCatalogDlg</span>
+<span class="kn">from</span> <span class="nn">qgis.core</span> <span class="kn">import</span> <span class="n">QgsProject</span><span class="p">,</span> <span class="n">QgsVectorLayer</span><span class="p">,</span> <span class="n">QgsRasterLayer</span><span class="p">,</span> <span class="n">Qgis</span><span class="p">,</span> <span class="n">QgsFileDownloader</span>
+<span class="kn">from</span> <span class="nn">qgis.gui</span> <span class="kn">import</span> <span class="n">QgsMessageBar</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">geometryhelper</span> <span class="k">as</span> <span class="n">gh</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">metadataParser</span> <span class="k">as</span> <span class="n">metadata</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">json</span>
+
+<div class="viewcode-block" id="dataCatalog"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog">[docs]</a><span class="k">class</span> <span class="nc">dataCatalog</span><span class="p">(</span><span class="n">QDialog</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The dialog for the catalog searchwindow</span>
+
+<span class="sd">    :param iface: A QGIS interface instance.</span>
+<span class="sd">    :type iface: QgsInterface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iface</span><span class="p">):</span>
+        <span class="n">QDialog</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowFlags</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">windowFlags</span><span class="p">()</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">Qt</span><span class="o">.</span><span class="n">WindowContextHelpButtonHint</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span> <span class="o">=</span> <span class="n">iface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initGui</span><span class="p">()</span>
+
+<div class="viewcode-block" id="dataCatalog.initGui"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.initGui">[docs]</a>    <span class="k">def</span> <span class="nf">initGui</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;setup the user interface&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span> <span class="o">=</span> <span class="n">Ui_dataCatalogDlg</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        
+        <span class="c1">#get helpers and meta-parser</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gh</span> <span class="o">=</span> <span class="n">gh</span><span class="o">.</span><span class="n">geometryHelper</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">iface</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">md</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">MDReader</span><span class="p">()</span>
+        
+        <span class="c1">#setup a message bar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bar</span> <span class="o">=</span> <span class="n">QgsMessageBar</span><span class="p">()</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">setSizePolicy</span><span class="p">(</span> <span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Minimum</span><span class="p">,</span> <span class="n">QSizePolicy</span><span class="o">.</span><span class="n">Fixed</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">verticalLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="p">)</span>
+        
+        <span class="c1">#vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">firstShow</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dl</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zoek</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        
+        <span class="c1">#datamodel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">QStandardItemModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span> <span class="o">=</span> <span class="n">QSortFilterProxyModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">resultView</span><span class="o">.</span><span class="n">setModel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span> <span class="p">)</span>
+        
+        <span class="c1">#completer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">completer</span> <span class="o">=</span> <span class="n">QCompleter</span><span class="p">(</span> <span class="bp">self</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">completerModel</span> <span class="o">=</span> <span class="n">QStringListModel</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">zoekTxt</span><span class="o">.</span><span class="n">setCompleter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completer</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">completer</span><span class="o">.</span><span class="n">setModel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">completerModel</span> <span class="p">)</span>
+ 
+        <span class="c1">#eventhandlers </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">zoekBtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onZoekClicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addWMS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addWFS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addWMTS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">addWCS</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dlClicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">resultView</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resultViewClicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">modelFilterCbx</span><span class="o">.</span><span class="n">currentIndexChanged</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelFilterCbxIndexChanged</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finished</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clean</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dataCatalog.setModel"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.setModel">[docs]</a>    <span class="k">def</span> <span class="nf">setModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">records</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;set the model of the seachresult with records (metadata.MDdata)&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">reclist</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])</span> 
+         
+        <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">reclist</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="p">)</span>             <span class="c1">#0</span>
+            <span class="n">wms</span> <span class="o">=</span> <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wms&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>              <span class="c1">#1</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;download&#39;</span><span class="p">]</span> <span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s1">&#39;download&#39;</span><span class="p">])</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">downloadLinks</span> <span class="o">=</span> <span class="n">QStandardItem</span><span class="p">(</span><span class="n">dl</span><span class="p">)</span>                 <span class="c1">#2</span>
+            
+            <span class="nb">id</span> <span class="o">=</span>       <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;uuid&#39;</span><span class="p">]</span> <span class="p">)</span>           <span class="c1">#3</span>
+            <span class="n">abstract</span> <span class="o">=</span> <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;abstract&#39;</span><span class="p">]</span> <span class="p">)</span>       <span class="c1">#4</span>
+            <span class="n">wfs</span> <span class="o">=</span>      <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wfs&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>         <span class="c1">#5</span>
+            <span class="n">wcs</span> <span class="o">=</span>      <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wcs&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>         <span class="c1">#6</span>
+            <span class="n">wmts</span> <span class="o">=</span>     <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wmts&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>        <span class="c1">#7</span>
+            <span class="c1">### </span>
+            <span class="n">wmsName</span> <span class="o">=</span>  <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wms&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>         <span class="c1">#8</span>
+            <span class="n">wfsName</span> <span class="o">=</span>  <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wfs&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>         <span class="c1">#9</span>
+            <span class="n">wcsName</span> <span class="o">=</span>  <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wcs&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>         <span class="c1">#10</span>
+            <span class="n">wmtsName</span> <span class="o">=</span> <span class="n">QStandardItem</span><span class="p">(</span> <span class="n">rec</span><span class="p">[</span><span class="s1">&#39;wmts&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span>        <span class="c1">#11</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">appendRow</span><span class="p">([</span><span class="n">title</span><span class="p">,</span><span class="n">wms</span><span class="p">,</span><span class="n">downloadLinks</span><span class="p">,</span><span class="nb">id</span><span class="p">,</span><span class="n">abstract</span><span class="p">,</span><span class="n">wfs</span><span class="p">,</span><span class="n">wcs</span><span class="p">,</span><span class="n">wmts</span><span class="p">,</span><span class="n">wmsName</span><span class="p">,</span><span class="n">wfsName</span><span class="p">,</span><span class="n">wcsName</span><span class="p">,</span><span class="n">wmtsName</span><span class="p">])</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">setSourceModel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span></div>
+
+    <span class="c1">#overwrite</span>
+<div class="viewcode-block" id="dataCatalog.show"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.show">[docs]</a>    <span class="k">def</span> <span class="nf">show</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Overwrite of QDialog.show&quot;&quot;&quot;</span>
+        <span class="n">QDialog</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setWindowModality</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstShow</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">organisatiesCbx</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">list_organisations</span><span class="p">()</span> <span class="p">)</span>
+            <span class="n">keywords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">list_suggestionKeyword</span><span class="p">()</span> <span class="p">)</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">completerModel</span><span class="o">.</span><span class="n">setStringList</span><span class="p">(</span> <span class="n">keywords</span> <span class="p">)</span>
+            <span class="c1">#self.bronnen = self.md.list_bronnen()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">typeCbx</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">+</span>  <span class="p">[</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">dataTypes</span><span class="p">]</span> <span class="p">)</span>                
+            
+            <span class="c1">#self.ui.INSPIREannexCbx.addItems( [&#39;&#39;]+ self.md.inspireannex )</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREserviceCbx</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">inspireServiceTypes</span> <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREthemaCbx</span><span class="o">.</span><span class="n">addItems</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">list_inspire_theme</span><span class="p">()</span> <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">firstShow</span> <span class="o">=</span> <span class="kc">False</span>      </div>
+      
+    <span class="c1">#eventhandlers</span>
+<div class="viewcode-block" id="dataCatalog.resultViewClicked"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.resultViewClicked">[docs]</a>    <span class="k">def</span> <span class="nf">resultViewClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called when user clicked resultView&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">resultView</span><span class="o">.</span><span class="n">selectedIndexes</span><span class="p">():</span> 
+           <span class="n">row</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">resultView</span><span class="o">.</span><span class="n">selectedIndexes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>  
+           
+           <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="p">)</span>
+           <span class="n">dl</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">dl</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">dl</span><span class="p">)</span> <span class="k">if</span> <span class="n">dl</span> <span class="k">else</span> <span class="kc">None</span>
+
+           <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span> <span class="p">)</span>
+           <span class="c1">##</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wmsLr</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wfsLr</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">9</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wcsLr</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">wmtsLr</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span> <span class="p">)</span>
+           <span class="c1">##</span>
+           <span class="n">title</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="p">)</span>
+           <span class="n">uuid</span>     <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="p">)</span>
+           <span class="n">abstract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">data</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">index</span><span class="p">(</span> <span class="n">row</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="p">)</span>
+           
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">descriptionText</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span>
+             <span class="sd">&quot;&quot;&quot;&lt;h3&gt;%s&lt;/h3&gt;&lt;div&gt;%s&lt;/div&gt;&lt;br/&gt;&lt;br/&gt;</span>
+<span class="sd">             &lt;a href=&#39;http://www.nationaalgeoregister.nl/geonetwork/srv/search/?uuid=%s&#39;&gt;</span>
+<span class="sd">             Bekijk in Nationaal Georegister&lt;/a&gt;&quot;&quot;&quot;</span> <span class="o">%</span>  <span class="p">(</span><span class="n">title</span> <span class="p">,</span> <span class="n">abstract</span><span class="p">,</span> <span class="n">uuid</span> <span class="p">))</span>
+           
+           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           
+           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                      
+           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           
+           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           
+           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="dataCatalog.onZoekClicked"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.onZoekClicked">[docs]</a>    <span class="k">def</span> <span class="nf">onZoekClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called when user clicked zoekBtn&quot;&quot;&quot;</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">zoek</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">zoekTxt</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>  </div>
+      
+<div class="viewcode-block" id="dataCatalog.modelFilterCbxIndexChanged"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.modelFilterCbxIndexChanged">[docs]</a>    <span class="k">def</span> <span class="nf">modelFilterCbxIndexChanged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called when user changes the ModelFilterCbx &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">modelFilterCbx</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">filterModel</span><span class="p">()</span></div>
+          
+<div class="viewcode-block" id="dataCatalog.filterModel"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.filterModel">[docs]</a>    <span class="k">def</span> <span class="nf">filterModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Filter model with col from modelFilter&quot;&quot;&quot;</span> 
+        <span class="k">if</span> <span class="n">col</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">setFilterKeyColumn</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+           <span class="n">expr</span> <span class="o">=</span> <span class="n">QRegExp</span><span class="p">(</span><span class="s2">&quot;?*&quot;</span><span class="p">,</span> <span class="n">Qt</span><span class="o">.</span><span class="n">CaseInsensitive</span><span class="p">,</span> <span class="n">QRegExp</span><span class="o">.</span><span class="n">Wildcard</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">setFilterRegExp</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">proxyModel</span><span class="o">.</span><span class="n">setFilterRegExp</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="dataCatalog.search"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.search">[docs]</a>    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="sd">&quot;&quot;&quot;start the search&quot;&quot;&quot;</span>
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">filterBox</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="n">orgName</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">organisatiesCbx</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+            <span class="n">dataTypes</span><span class="o">=</span> <span class="p">[</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">dataTypes</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">typeCbx</span><span class="o">.</span><span class="n">currentText</span><span class="p">()]</span> 
+            <span class="k">if</span> <span class="n">dataTypes</span> <span class="o">!=</span> <span class="p">[]:</span> <span class="n">dataType</span><span class="o">=</span> <span class="n">dataTypes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span> <span class="n">dataType</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+            <span class="n">inspiretheme</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREthemaCbx</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+            <span class="n">inspireServiceType</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREserviceCbx</span><span class="o">.</span><span class="n">currentText</span><span class="p">()</span>
+            <span class="n">searchResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">searchAll</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoek</span><span class="p">,</span> <span class="n">orgName</span><span class="p">,</span> <span class="n">dataType</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">searchResult</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">md</span><span class="o">.</span><span class="n">searchAll</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoek</span> <span class="p">)</span> 
+        <span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">countLbl</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span> <span class="s2">&quot;Aantal gevonden: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">searchResult</span><span class="o">.</span><span class="n">count</span>  <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">descriptionText</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setModel</span><span class="p">(</span><span class="n">searchResult</span><span class="o">.</span><span class="n">records</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">searchResult</span><span class="o">.</span><span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Waarschuwing &quot;</span><span class="p">),</span> 
+                <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> 
+                    <span class="s2">&quot;Er zijn geen resultaten gevonden voor deze zoekopdracht&quot;</span><span class="p">),</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dataCatalog.addWMS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.addWMS">[docs]</a>    <span class="k">def</span> <span class="nf">addWMS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add WMS from current record to map&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span>
+      
+        <span class="n">crs</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">gh</span><span class="o">.</span><span class="n">getGetMapCrs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="p">)</span><span class="o">.</span><span class="n">authid</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="o">!=</span> <span class="s1">&#39;EPSG:28992&#39;</span> <span class="ow">or</span>  <span class="n">crs</span> <span class="o">!=</span> <span class="s1">&#39;EPSG:3857&#39;</span> <span class="ow">or</span>  <span class="n">crs</span> <span class="o">!=</span> <span class="s1">&#39;EPSG:3043&#39;</span><span class="p">:</span>
+           <span class="n">crs</span> <span class="o">=</span> <span class="s1">&#39;EPSG:28992&#39;</span> 
+        <span class="k">try</span><span class="p">:</span>   
+          <span class="n">lyrs</span> <span class="o">=</span>  <span class="n">metadata</span><span class="o">.</span><span class="n">getWmsLayerNames</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="p">)</span> 
+        <span class="k">except</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span> <span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+          <span class="k">return</span> 
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;WMS&quot;</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Kan geen lagen vinden in: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">+</span> <span class="s2">&quot;?service=WMS&amp;request=Getcapabilities&amp;version=1.3.0&quot;</span> <span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Warning</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="k">return</span> 
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">layerTitle</span> <span class="o">=</span> <span class="n">lyrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layerTitle</span><span class="p">,</span> <span class="n">accept</span> <span class="o">=</span> <span class="n">QInputDialog</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;WMS toevoegen&quot;</span><span class="p">,</span> 
+                                              <span class="s2">&quot;Kies een laag om toe te voegen&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span><span class="p">],</span> <span class="n">editable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">accept</span><span class="p">:</span> <span class="k">return</span>
+        
+        <span class="n">layerName</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">url</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">crs</span> <span class="o">!=</span> <span class="s1">&#39;EPSG:28992&#39;</span> <span class="ow">or</span>  <span class="n">crs</span> <span class="o">!=</span> <span class="s1">&#39;EPSG:3857&#39;</span> <span class="p">:</span> 
+           <span class="n">crs</span> <span class="o">=</span> <span class="s1">&#39;EPSG:28992&#39;</span> 
+        <span class="n">wmsUrl</span> <span class="o">=</span> <span class="s2">&quot;url=</span><span class="si">%s</span><span class="s2">&amp;layers=</span><span class="si">%s</span><span class="s2">&amp;format=image/png&amp;styles=</span><span class="si">%s</span><span class="s2">&amp;crs=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">style</span> <span class="p">,</span> <span class="n">crs</span><span class="p">)</span> 
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">rlayer</span> <span class="o">=</span> <span class="n">QgsRasterLayer</span><span class="p">(</span><span class="n">wmsUrl</span><span class="p">,</span> <span class="n">layerTitle</span><span class="p">,</span> <span class="s1">&#39;wms&#39;</span><span class="p">)</span> 
+            <span class="k">if</span> <span class="n">rlayer</span><span class="o">.</span><span class="n">isValid</span><span class="p">():</span>
+               <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">addMapLayer</span><span class="p">(</span><span class="n">rlayer</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>  
+                <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Kan WMS niet laden&quot;</span><span class="p">),</span> 
+                                    <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> 
+        <span class="k">except</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="k">return</span> </div>
+      
+<div class="viewcode-block" id="dataCatalog.addWFS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.addWFS">[docs]</a>    <span class="k">def</span> <span class="nf">addWFS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add WFS from current record to map&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span>
+
+        <span class="n">wfsinfo</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">getWFSLayerNames</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="p">)</span>
+        <span class="n">lyrs</span> <span class="o">=</span>  <span class="n">wfsinfo</span><span class="p">[</span><span class="s1">&#39;layerNames&#39;</span><span class="p">]</span>
+        <span class="n">wfsVersion</span> <span class="o">=</span> <span class="n">wfsinfo</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;WFS&quot;</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> 
+                      <span class="s2">&quot;Kan geen lagen vinden in: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Warning</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">layerTitle</span> <span class="o">=</span> <span class="n">lyrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layerTitle</span><span class="p">,</span> <span class="n">accept</span> <span class="o">=</span> <span class="n">QInputDialog</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;WFS toevoegen&quot;</span><span class="p">),</span> 
+                 <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Kies een laag om toe te voegen&quot;</span><span class="p">),</span>
+                 <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span><span class="p">],</span> <span class="n">editable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">accept</span><span class="p">:</span> <span class="k">return</span>
+          
+        <span class="n">layerName</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">IsComplex</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">url</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+           
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">dlGMLchk</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">dlWFS</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">wfsVersion</span><span class="p">)</span> 
+           <span class="k">return</span>
+           
+        <span class="k">if</span> <span class="n">IsComplex</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">complexWFS</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dlWFS</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">wfsVersion</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">wfsUri</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">makeWFSuri</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">wfsVersion</span> <span class="p">)</span>
+            <span class="n">vlayer</span> <span class="o">=</span> <span class="n">QgsVectorLayer</span><span class="p">(</span> <span class="n">wfsUri</span><span class="p">,</span> <span class="n">layerTitle</span> <span class="p">,</span> <span class="s2">&quot;WFS&quot;</span><span class="p">)</span>            
+            <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">addMapLayer</span><span class="p">(</span><span class="n">vlayer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dataCatalog.complexWFS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.complexWFS">[docs]</a>    <span class="k">def</span> <span class="nf">complexWFS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="sd">&quot;&quot;&quot;Warning messagebox to be called when working WFS with complex features, </span>
+<span class="sd">       User will be asked if (s)he wants to try load te service with download instead.</span>
+<span class="sd">       </span>
+<span class="sd">       :return: True if user wants to download else false.</span>
+<span class="sd">       &quot;&quot;&quot;</span>
+       <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">       Deze laag kon niet correct ingeladen worden als WFS-laag, omdat het vermoedelijk gaat om een service met complexe features.&lt;br/&gt;</span>
+<span class="s2">       U kunt de laag downloaden voor het huidige kaartbeeld als GML. Mogelijk worden ook dan niet alle gegevens correct weergegeven.</span>
+<span class="s2">       </span>
+<span class="s2">       &lt;br/&gt;&lt;br/&gt;U kunt eventueel de plugin &lt;a href=&#39;https://plugins.qgis.org/plugins/gml_application_schema_toolbox&#39;&gt;</span>
+<span class="s2">       GML Application Schema Toolbox&lt;/a&gt; installeren, een plugin die GML met complexe features kan laden. </span>
+<span class="s2">       Na installatie, vindt u deze tool op de menubalk onder: &lt;strong&gt;Plugins &gt; QGIS GML Application Schema Toolbox &gt; Wizard&lt;/strong&gt;</span>
+<span class="s2">        </span>
+<span class="s2">       &lt;br/&gt;&lt;br/&gt;Klik op &lt;em&gt;Ja/Yes&lt;/em&gt; als u wilt proberen deze laag te downloaden voor het huidige kaartbeeld en vervolgens in te laden? </span>
+<span class="s2">       &quot;&quot;&quot;</span>
+       
+       <span class="n">buttonDlg</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mainWindow</span><span class="p">(),</span> <span class="s2">&quot;Kan features niet correct lezen.&quot;</span><span class="p">,</span> 
+            <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">),</span>  <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span> <span class="o">|</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">No</span> <span class="o">|</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Cancel</span><span class="p">,</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Cancel</span><span class="p">)</span>  
+       <span class="k">if</span> <span class="n">buttonDlg</span> <span class="o">==</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>  
+           <span class="k">return</span> <span class="kc">True</span>
+       <span class="k">else</span><span class="p">:</span>
+           <span class="k">return</span> <span class="kc">False</span> </div>
+       
+<div class="viewcode-block" id="dataCatalog.dlWFS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.dlWFS">[docs]</a>    <span class="k">def</span> <span class="nf">dlWFS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span>  <span class="n">layerName</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:4326&quot;</span><span class="p">,</span> <span class="n">wfsVersion</span><span class="o">=</span><span class="s2">&quot;2.0.0&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Download a WFS as a GML-file for current extend. </span>
+<span class="sd">        The user wil be asked to chose filename and location. </span>
+<span class="sd">        </span>
+<span class="sd">       :param url: the url of the wfs</span>
+<span class="sd">       :param iserror: true/false, has an error been called?</span>
+<span class="sd">       :param wfsVersion: 2.0.0 or 1.1.0</span>
+<span class="sd">       :param layerName: the typeName of the layer in  the WFS</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Opslaan als GML voor huidig kaartbeeld&quot;</span>
+        <span class="n">fileName</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mainWindow</span><span class="p">(),</span> <span class="n">title</span><span class="p">,</span> <span class="kc">None</span> <span class="p">,</span><span class="s2">&quot;GML (*.gml)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fileName</span><span class="p">:</span> <span class="k">return</span>
+    
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">extent</span><span class="p">()</span>
+        
+        <span class="c1">#find numerice part in crs</span>
+        <span class="n">crsNumS</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">crs</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="p">])</span>
+        <span class="k">if</span> <span class="n">crsNumS</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">crsNum</span><span class="o">=</span> <span class="mi">4326</span>
+            <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:4326&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">crsNum</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">crsNumS</span><span class="p">)</span>
+        
+        <span class="n">eMin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gh</span><span class="o">.</span><span class="n">prjPtFromMapCrs</span><span class="p">(</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">xMinimum</span><span class="p">(),</span> <span class="n">e</span><span class="o">.</span><span class="n">yMinimum</span><span class="p">()],</span> <span class="n">crsNum</span><span class="p">)</span>
+        <span class="n">eMax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gh</span><span class="o">.</span><span class="n">prjPtFromMapCrs</span><span class="p">(</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">xMaximum</span><span class="p">(),</span> <span class="n">e</span><span class="o">.</span><span class="n">yMaximum</span><span class="p">()],</span> <span class="n">crsNum</span><span class="p">)</span>
+        
+        <span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span> <span class="n">eMin</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">eMin</span><span class="o">.</span><span class="n">y</span><span class="p">(),</span> <span class="n">eMax</span><span class="o">.</span><span class="n">x</span><span class="p">(),</span> <span class="n">eMax</span><span class="o">.</span><span class="n">y</span><span class="p">()</span> <span class="p">]</span>
+        <span class="n">metadata</span><span class="o">.</span><span class="n">downloadWFS</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">fileName</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="mi">50000</span><span class="p">,</span> <span class="n">wfsVersion</span><span class="p">,</span> <span class="n">bbox</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">xmlIsEmpty</span><span class="p">(</span> <span class="n">fileName</span> <span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                <span class="n">xmlStr</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> 
+           
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="p">()</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Warning</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;&lt;strong&gt;De GML-file bevat geen data:&lt;/strong&gt;&lt;br/&gt; Wellicht is er geen intersecterende data.&quot;</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;Geen geldige GML-file&quot;</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setDetailedText</span><span class="p">(</span><span class="n">xmlStr</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">setStandardButtons</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Ok</span><span class="p">)</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">addVectorLayer</span><span class="p">(</span><span class="n">fileName</span> <span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="s2">&quot;ogr&quot;</span><span class="p">)</span></div>
+             
+<div class="viewcode-block" id="dataCatalog.addWMTS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.addWMTS">[docs]</a>    <span class="k">def</span> <span class="nf">addWMTS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot;Add WMTS from current record to map&quot;&quot;&quot;</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="k">return</span>
+      <span class="k">try</span><span class="p">:</span>
+          <span class="n">lyrs</span> <span class="o">=</span>  <span class="n">metadata</span><span class="o">.</span><span class="n">getWMTSlayersNames</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="p">)</span>
+      <span class="k">except</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span><span class="s1">&#39;Kan niet connecteren met &#39;</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+          <span class="k">return</span> 
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;WMTS&quot;</span><span class="p">,</span> 
+          <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Kan geen lagen vinden in: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Warning</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+          <span class="k">return</span>
+      <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+         <span class="n">layerTitle</span> <span class="o">=</span> <span class="n">lyrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+      <span class="k">else</span><span class="p">:</span>
+         <span class="n">layerTitle</span><span class="p">,</span> <span class="n">accept</span> <span class="o">=</span> <span class="n">QInputDialog</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;WMTS toevoegen&quot;</span><span class="p">,</span> 
+                                    <span class="s2">&quot;Kies een laag om toe te voegen&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span><span class="p">],</span> <span class="n">editable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+         <span class="k">if</span> <span class="ow">not</span> <span class="n">accept</span><span class="p">:</span> <span class="k">return</span>
+        
+      <span class="n">layerName</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+      <span class="n">matrix</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+      <span class="n">frmt</span> <span class="o">=</span>  <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+      <span class="n">srs</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+      
+      <span class="n">wmtsUrl</span><span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">makeWMTSuri</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="p">,</span> <span class="n">layerName</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="n">frmt</span><span class="p">,</span> <span class="n">srsname</span><span class="o">=</span><span class="n">srs</span><span class="p">)</span>
+
+      <span class="n">rlayer</span> <span class="o">=</span> <span class="n">QgsRasterLayer</span><span class="p">(</span><span class="n">wmtsUrl</span><span class="p">,</span> <span class="n">layerTitle</span><span class="p">,</span> <span class="s1">&#39;wms&#39;</span><span class="p">)</span> 
+      <span class="k">if</span> <span class="n">rlayer</span><span class="o">.</span><span class="n">isValid</span><span class="p">():</span>
+         <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">addMapLayer</span><span class="p">(</span><span class="n">rlayer</span><span class="p">)</span>
+      <span class="k">else</span><span class="p">:</span>  
+          
+         <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Kan WMS niet laden&quot;</span><span class="p">),</span> 
+               <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> </div>
+  
+<div class="viewcode-block" id="dataCatalog.addWCS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.addWCS">[docs]</a>    <span class="k">def</span> <span class="nf">addWCS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="sd">&quot;&quot;&quot;Add WCS from current record to map&quot;&quot;&quot;</span>
+      <span class="n">lyrs</span> <span class="o">=</span>  <span class="n">metadata</span><span class="o">.</span><span class="n">getWCSlayerNames</span><span class="p">(</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="p">)</span>
+         
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;WCS&quot;</span><span class="p">,</span> 
+          <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> 
+                    <span class="s2">&quot;Kan geen lagen vinden in: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Warning</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+          <span class="k">return</span>
+      <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lyrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+          <span class="n">layerTitle</span> <span class="o">=</span> <span class="n">lyrs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+      <span class="k">else</span><span class="p">:</span>
+          <span class="n">layerTitle</span><span class="p">,</span> <span class="n">accept</span> <span class="o">=</span> <span class="n">QInputDialog</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;WCS toevoegen&quot;</span><span class="p">,</span> 
+                              <span class="s2">&quot;Kies een laag om toe te voegen&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span><span class="p">],</span> <span class="n">editable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+          <span class="k">if</span> <span class="ow">not</span> <span class="n">accept</span><span class="p">:</span> <span class="k">return</span>
+        
+      <span class="n">layerName</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">lyrs</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span> 
+
+      <span class="n">wcsUri</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">makeWCSuri</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wcs</span><span class="p">,</span> <span class="n">layerName</span> <span class="p">)</span>  <span class="c1">#srsname=srs, invertAxis=axis</span>
+
+      <span class="n">QApplication</span><span class="o">.</span><span class="n">setOverrideCursor</span><span class="p">(</span> <span class="n">QCursor</span><span class="p">(</span><span class="n">Qt</span><span class="o">.</span><span class="n">WaitCursor</span><span class="p">))</span> 
+      <span class="n">rlayer</span> <span class="o">=</span> <span class="n">QgsRasterLayer</span><span class="p">(</span> <span class="n">wcsUri</span><span class="p">,</span> <span class="n">layerTitle</span> <span class="p">,</span> <span class="s2">&quot;wcs&quot;</span><span class="p">)</span>
+
+      <span class="k">if</span> <span class="n">rlayer</span><span class="o">.</span><span class="n">isValid</span><span class="p">():</span>
+          <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span><span class="o">.</span><span class="n">addMapLayer</span><span class="p">(</span><span class="n">rlayer</span><span class="p">)</span>        
+      <span class="k">else</span><span class="p">:</span>  
+          <span class="bp">self</span><span class="o">.</span><span class="n">bar</span><span class="o">.</span><span class="n">pushMessage</span><span class="p">(</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="s2">&quot;datacatalog&quot;</span><span class="p">,</span> <span class="s2">&quot;Kan WCS niet laden&quot;</span><span class="p">),</span> 
+          <span class="n">level</span><span class="o">=</span><span class="n">Qgis</span><span class="o">.</span><span class="n">Critical</span> <span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> 
+      <span class="n">QApplication</span><span class="o">.</span><span class="n">restoreOverrideCursor</span><span class="p">()</span></div>
+            
+<div class="viewcode-block" id="dataCatalog.dlClicked"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.dlClicked">[docs]</a>    <span class="k">def</span> <span class="nf">dlClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called when user clicked downloadBtn, initiate download of current record&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="k">return</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">layerTitle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> 
+            <span class="n">dlName</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> 
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="n">layerTitle</span><span class="p">,</span> <span class="n">accept</span> <span class="o">=</span> <span class="n">QInputDialog</span><span class="o">.</span><span class="n">getItem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Laag downloaden&quot;</span><span class="p">,</span> 
+                                <span class="s2">&quot;Kies een download&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">],</span> <span class="n">editable</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">accept</span><span class="p">:</span> 
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dlName</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span> <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">layerTitle</span> <span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">file_ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>  <span class="n">dlName</span> <span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">file_path</span>  <span class="o">=</span>  <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span>  <span class="n">dlName</span> <span class="p">)</span> <span class="p">,</span> <span class="n">layerTitle</span> <span class="p">)</span>
+        
+        <span class="n">file_path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">QFileDialog</span><span class="o">.</span><span class="n">getSaveFileName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="s2">&quot;Opslaan als&quot;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> (*</span><span class="si">{0}</span><span class="s2">);;All Files (*)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_ext</span><span class="p">)</span> <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="n">QgsFileDownloader</span><span class="p">(</span> <span class="n">QUrl</span><span class="p">(</span><span class="n">dlName</span><span class="p">),</span> <span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dataCatalog.clean"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.clean">[docs]</a>    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reset the UI to initial positions&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dl</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">zoekTxt</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">descriptionText</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">countLbl</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREthemaCbx</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">organisatiesCbx</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">typeCbx</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">INSPIREserviceCbx</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">modelFilterCbx</span><span class="o">.</span><span class="n">setCurrentIndex</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div></div>
+        
+
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.dataCatalog</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

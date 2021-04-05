@@ -13,20 +13,19 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os, sys
-#sys.path.insert(0, os.path.abspath('..'))
 
-sys.path.insert(0, r'C:\Users\sa64489\Documents\GitHub\ptvs_geopunt' )
+sys.path.insert(0, r'C:\work\prj\geonovum')
 sys.path.insert(0, r'C:\OSGeo4W64\apps\qgis\python' )
 # -- Project information -----------------------------------------------------
 
 project = u'The Dutch INSPIRE QGIS plugin'
-copyright = u'2019, Kay Warrie'
+copyright = u'2021, Geonovum, Kay Warrie'
 author = u'Kay Warrie'
 
 # The short X.Y version
 version = u'2.5'
 # The full version, including alpha/beta/rc tags
-release = u'Version 2.5 for QGIS 3'
+release = u'Version 2.7 for QGIS 3'
 
 
 # -- General configuration ---------------------------------------------------
@@ -156,7 +155,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'deNederlandseINSPIREQGISplugin', project,
-     author, 'deNederlandseINSPIREQGISplugin', 'One line description of project.',
+     author, 'deNederlandseINSPIREQGISplugin', 
+     'One line description of project.',
      'Miscellaneous'),
 ]
 

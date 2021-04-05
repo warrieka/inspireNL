@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>The Dutch INSPIRE QGIS plugin &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <script src="_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="About" href="About.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="About.html" title="About"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Dutch INSPIRE QGIS plugin</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="the-dutch-inspire-qgis-plugin">
+<h1>The Dutch INSPIRE QGIS plugin<a class="headerlink" href="#the-dutch-inspire-qgis-plugin" title="Permalink to this headline">¶</a></h1>
+<p><em>A QGIS plugin to search and add Datasets of the Dutch Dataportal ‘Nationaal Georegister’ to QGIS.</em></p>
+<div class="toctree-wrapper compound">
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="About.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Usage.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Usage.html#toolbar">Toolbar</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Usage.html#mainwindow">Mainwindow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Usage.html#about-dialog">About-dialog</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Contributing%20and%20forking.html">Contributing and forking</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Contributing%20and%20forking.html#compiling-and-running-the-plugin-from-code">Compiling and running the plugin from code:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Contributing%20and%20forking.html#modifing-the-code-to-target-an-other-csw">Modifing the code to target an other CSW:</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Contributing%20and%20forking.html#contributing">Contributing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Proxy%20Settings.html">Proxy Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-7">Version 2.7</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-6">Version 2.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-5">Version 2.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-4">Version 2.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-3">Version 2.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-2">Version 2.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-1">Version 2.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Changelog.html#version-2-0">Version 2.0</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Modules%20and%20Classes.html">Modules and Classes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.dataCatalog">dataCatalog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.geometryhelper">geometryhelper module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.inspireNL">inspireNL module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.inspireNLabout">inspireNLabout module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.metadataParser">metadataParser module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.settings">settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Modules%20and%20Classes.html#module-inspireNL.webUtil">webUtil module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Dutch INSPIRE QGIS plugin</a><ul>
+<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="About.html"
+                        title="next chapter">About</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="About.html" title="About"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">The Dutch INSPIRE QGIS plugin</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

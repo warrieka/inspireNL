@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Usage &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <script src="_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing and forking" href="Contributing%20and%20forking.html" />
+    <link rel="prev" title="About" href="About.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Contributing%20and%20forking.html" title="Contributing and forking"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="About.html" title="About"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>You can find the tool in the standard QGIS-plugin repo.
+On the menubar: <strong>Plugins &gt; Manage and Install Plugins .. &gt; All</strong> search for <em>INSPIRE nederland</em> and click <em>install plugin</em>. You can also download a specific version from <a class="reference external" href="https://github.com/warrieka/inspireNL/releases/">Github</a> and install de plugin from zipfile. For  <a class="reference internal" href="Contributing%20and%20forking.html#contribute"><span class="std std-ref">Contributing and forking</span></a> or testing a new version of the plugin then you can use this method.</p>
+</section>
+<section id="toolbar">
+<h2>Toolbar<a class="headerlink" href="#toolbar" title="Permalink to this headline">¶</a></h2>
+<p>If you activate the tool in the “Manage and Install Plugins”-dialog, then the toolbar should appear. If it doesn’t then rigth click on a empty space en check out <strong>inspireNL</strong>.
+There a 2 buttons on the tool one for showing the the Mainwindow and one for the About-dialog.</p>
+<p>This toolbar is declared in the <a class="reference internal" href="Modules%20and%20Classes.html#inspirenl"><span class="std std-ref">inspireNL module</span></a>.</p>
+<img alt="_images/toolbar.png" src="_images/toolbar.png" />
+</section>
+<section id="mainwindow">
+<h2>Mainwindow<a class="headerlink" href="#mainwindow" title="Permalink to this headline">¶</a></h2>
+<p>This dialog contains the main functionality of the plugin. You can enter search-terms in top, uses filters based on organisation or INSPIRE -themes. De result-view shows a list of found records and if you click on a record then you get the description in the page next to it. You filter the result view to only show results with WMS, WFS, WMTS or WCS layers or downloads.
+You can add WMS, WFS, WMTS or WCS layers to QGIS and download associated files with buttons below. These downloads are opened in a webbrowser. If you check “WFS downloaden binnen huidig kaartbeeld” then WFS wil be downloaded as a file and opened in QGIS instead of loaded as a service.
+There is a button to close the dialog on the bottom rigth side.</p>
+<p>This dialog is declared in the <a class="reference internal" href="Modules%20and%20Classes.html#datacatalog"><span class="std std-ref">dataCatalog module</span></a>.</p>
+<img alt="_images/mainWindow.png" src="_images/mainWindow.png" />
+</section>
+<section id="about-dialog">
+<h2>About-dialog<a class="headerlink" href="#about-dialog" title="Permalink to this headline">¶</a></h2>
+<p>This dialog just shows the about-message. There is a button to close the dialog on the bottom rigth side..</p>
+<p>This dialog is declared in the <a class="reference internal" href="Modules%20and%20Classes.html#inspirenlabout"><span class="std std-ref">inspireNLabout module</span></a>.</p>
+<img alt="_images/aboutDlg.png" src="_images/aboutDlg.png" />
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Usage</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#toolbar">Toolbar</a></li>
+<li><a class="reference internal" href="#mainwindow">Mainwindow</a></li>
+<li><a class="reference internal" href="#about-dialog">About-dialog</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="About.html"
+                        title="previous chapter">About</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Contributing%20and%20forking.html"
+                        title="next chapter">Contributing and forking</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Usage.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Contributing%20and%20forking.html" title="Contributing and forking"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="About.html" title="About"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Usage</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

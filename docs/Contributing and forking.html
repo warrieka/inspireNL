@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Contributing and forking &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <script src="_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="Changelog.html" />
+    <link rel="prev" title="Usage" href="Usage.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Changelog.html" title="Changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Usage.html" title="Usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing and forking</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="contributing-and-forking">
+<span id="contribute"></span><h1>Contributing and forking<a class="headerlink" href="#contributing-and-forking" title="Permalink to this headline">¶</a></h1>
+<section id="compiling-and-running-the-plugin-from-code">
+<h2>Compiling and running the plugin from code:<a class="headerlink" href="#compiling-and-running-the-plugin-from-code" title="Permalink to this headline">¶</a></h2>
+<p>You can find the lated version of the code on <a class="reference external" href="https://github.com/warrieka/inspireNL">Github</a>.</p>
+<p>To modify the the code, you can clone the repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">warrieka</span><span class="o">/</span><span class="n">inspireNL</span>
+<span class="n">cd</span> <span class="n">inspireNL</span>
+</pre></div>
+</div>
+<p>To test and compile the code a Makefile is provided. There are different files for Linux and windows. Rename the version for you system to <em>Makefile</em> to make correct one active.</p>
+<p>In order to use this makefile you need to have a GNU-compatible shell with make installed and the QGIS-binaries and its python modules on the system PATH. The PyQT commandline tools should be part of your QGIS install, these are essential for compiling the plugin. On windows you can use MinGW and on Linux you just need to install the basic build-tools:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">build</span><span class="o">-</span><span class="n">essential</span>
+</pre></div>
+</div>
+<p>Before use you need to edit the <a class="reference external" href="https://github.com/warrieka/inspireNL/blob/qgis3/Makefile#L25">Makefile</a> at line 25 and set PROFILE to the location of your QGIS userprofile. The default location on windows is <em>C:Users&lt;username&gt;AppDataRoamingQGISQGIS3profilesdefault</em> but you should make a separate devprofile.</p>
+<p>To compile the code you can type just make ass it is the default target or:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="nb">compile</span>
+</pre></div>
+</div>
+<p>To compile and deploy the compiled code to the PROFILE as a plugin:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">deploy</span>
+</pre></div>
+</div>
+<p>To compile, deploy and start QGIS with PROFILE:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">run</span>
+</pre></div>
+</div>
+<p>To delete the plugin under PROFILE:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">derase</span>
+</pre></div>
+</div>
+<p>To delete compiled files from the codebase:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">clean</span>
+</pre></div>
+</div>
+<p>The dclean target removes compiled python files from plugin directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">dclean</span>
+</pre></div>
+</div>
+<p>The zip target deploys the plugin and creates a zip file with the deployed content. You can then upload the zip file on <a class="reference external" href="http://plugins.qgis.org">http://plugins.qgis.org</a> to add this plugin to standard plugin-repo. This target requires <em>zip</em> to be on the PATH:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="nb">zip</span>
+</pre></div>
+</div>
+<p>The package target creates a zip package of all the code of the plugin named $(PLUGINNAME).zip of a specific version ofthe code for archiving purposes. THis is NOT the package you should upload to <a class="reference external" href="http://plugins.qgis.org">http://plugins.qgis.org</a>.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">package</span> <span class="n">VERSION</span><span class="o">=&lt;</span><span class="n">VERSION</span> <span class="n">NAME</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>There are also commands for translations, but rigth now there is only one language supported: dutch.</p>
+</section>
+<section id="modifing-the-code-to-target-an-other-csw">
+<h2>Modifing the code to target an other CSW:<a class="headerlink" href="#modifing-the-code-to-target-an-other-csw" title="Permalink to this headline">¶</a></h2>
+<p>First Fork the code.</p>
+<p>The application was orignaly develloped to work against a specific version of geonetwork. Originaly it contained many non-stardard geonetwork specific requests. Starting from the version 2.x on the qgis3-branch, only standard OGC-services are used to query the server.</p>
+<p>To target another CSW-service, you wil need to modify the <a class="reference internal" href="Modules%20and%20Classes.html#metadataparser"><span class="std std-ref">metadataParser module</span></a>. The minimal change will global variable <strong>CSW_URL</strong> that contains the full url of the csw-service up to the query string. For the NGR this is: <a class="reference external" href="http://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire">http://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire</a> . This Global can be fount at the top of the metadataParser.py file.</p>
+<p>You might have make specific changes for like for custom vendor parameters, custom thypes of services and application-schema’s used etc. Normaly al these have to be made in the metadataParser Module. MDdata contains all the metadata-xml parsing, MDreader contains al the interactiing with the CSW. Their are functions for constructing requests to OGC W*S services and handling downloads.</p>
+<p>Rebranding can be done by changing the icons in the images folder.</p>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>To upload your modifications, just edit the code commit and make a <a class="reference external" href="https://help.github.com/articles/about-pull-requests/">Pull-request</a> on github.
+The orignal develloper will review and merge the edits if approved.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Contributing and forking</a><ul>
+<li><a class="reference internal" href="#compiling-and-running-the-plugin-from-code">Compiling and running the plugin from code:</a></li>
+<li><a class="reference internal" href="#modifing-the-code-to-target-an-other-csw">Modifing the code to target an other CSW:</a></li>
+<li><a class="reference internal" href="#contributing">Contributing</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Usage.html"
+                        title="previous chapter">Usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Changelog.html"
+                        title="next chapter">Changelog</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Contributing and forking.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Changelog.html" title="Changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Usage.html" title="Usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing and forking</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

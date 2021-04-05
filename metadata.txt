@@ -17,11 +17,8 @@ about=In het kader van INSPIRE realiseren de Europese lidstaten een digitaal net
 Heeft u vragen over INSPIRE of de plugin, kijk dan op https://www.geonovum.nl/geo-standaarden/inspire-europese-leefomgeving of stel ze aan de INSPIRE helpdesk (inspire@geonovum.nl).  
 # Optional items:
 # Uncomment the following line and add your changelog entries:
-changelog=- Migratie naar QGIS 3
-    - Alle calls zijn nu gebasserd op OGC-standaarden 
-    - Downloaden met atom-links kan toont nu lijst indien meerdere bestanden. 
-    - Optie om WFS te downloaden binnen huidig kaartbeeld. 
-    - Verbetering werking WFS en WCS, ondersteuning versie 2.0.0 
+changelog=- Alle http calls gebeuren nu met QNetworkRequest en QgsBlockingNetworkRequest ipv urlib.request.
+
 
 # Tags are comma separated with spaces allowed
 tags=INSPIRE, Nederland, PDOK, Nationaal, Georegister

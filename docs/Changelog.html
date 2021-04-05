@@ -1,0 +1,198 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Changelog &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <script src="_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Modules and Classes" href="Modules%20and%20Classes.html" />
+    <link rel="prev" title="Proxy Settings" href="Proxy%20Settings.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Modules%20and%20Classes.html" title="Modules and Classes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Proxy%20Settings.html" title="Proxy Settings"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Changelog</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
+<section id="version-2-7">
+<h2>Version 2.7<a class="headerlink" href="#version-2-7" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Refactored to make http-calls through <a class="reference external" href="https://doc.qt.io/qt-5/qtnetwork-index.html">QNetWork</a> and <a class="reference external" href="https://qgis.github.io/pyqgis/3.16/core/QgsBlockingNetworkRequest.html">QgsBlockingNetworkRequest</a> instead of urllib.request, so QGIS proxy-settings will be used.</p></li>
+</ul>
+</section>
+<section id="version-2-6">
+<h2>Version 2.6<a class="headerlink" href="#version-2-6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Production release</p></li>
+</ul>
+</section>
+<section id="version-2-5">
+<h2>Version 2.5<a class="headerlink" href="#version-2-5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Further improved WFS with exotic CRS</p></li>
+<li><p>Improved Download-function: no longer use webbrowser.</p></li>
+<li><p>Changed some maessages a request of customer</p></li>
+</ul>
+</section>
+<section id="version-2-4">
+<h2>Version 2.4<a class="headerlink" href="#version-2-4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Improved WFS CRS handling including working with inverted axis.</p></li>
+<li><p>User notificaton improvements.</p></li>
+<li><p>Spell fixes.</p></li>
+</ul>
+</section>
+<section id="version-2-3">
+<h2>Version 2.3<a class="headerlink" href="#version-2-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Option to download WFS instead  of loading as a service.</p></li>
+<li><p>Handle complex features in WFS better.</p></li>
+<li><p>Various small bugfixes as reported by users.</p></li>
+<li><p>Improved documentation.</p></li>
+</ul>
+</section>
+<section id="version-2-2">
+<h2>Version 2.2<a class="headerlink" href="#version-2-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Created a documentation project based on <a class="reference external" href="http://www.sphinx-doc.org">http://www.sphinx-doc.org</a></p></li>
+</ul>
+</section>
+<section id="version-2-1">
+<h2>Version 2.1<a class="headerlink" href="#version-2-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>All search qeuries now use LIKE instead = as this yields more complete results, searches no longer cases sensitive.</p></li>
+<li><p>Various small bugfixes as reported by users.</p></li>
+<li><p>Improved support for WFS 2.0</p></li>
+</ul>
+</section>
+<section id="version-2-0">
+<h2>Version 2.0<a class="headerlink" href="#version-2-0" title="Permalink to this headline">¶</a></h2>
+<p>The largest change in this version is the migration to QGIS3.</p>
+<p>In addition to the migration to QGIS3 / Python3 / QT5, the following issues have been improved.</p>
+<ul class="simple">
+<li><p>CSW: The geonetwork services are nowhere used anymore, everything is CSW/OGC based.</p></li>
+<li><p>Keywords are now a autocomplete on the search text instead of a dropdown.</p></li>
+<li><p>Download: Can now handle ATOM links with multiple entries. You get when there are several, a dropdown with titles of the various entries. The link is opened in a web page. That is the easiest way to handle that download. Possibly I can still replace this with a “save as” dialog, the disadvantage of this is that you also save the error messages and such if the link is no longer correct.</p></li>
+<li><p>WFS: WFS 2.0 is now also supported.</p></li>
+<li><dl class="simple">
+<dt>WCS: Several improvements have been made, but you continue to bump into the limitations of that service.</dt><dd><ul>
+<li><p>AHN services work but are often slow due to the large quantity that needs to be downloaded.</p></li>
+<li><p>The Bathymetrie Nederland service does not work, they are not compatible with QGIS. You can not add that service via the standard method.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Networking, reverse network proxy is used if present. The plug-in will now also work on some corporate networks with high security.</p></li>
+</ul>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Changelog</a><ul>
+<li><a class="reference internal" href="#version-2-7">Version 2.7</a></li>
+<li><a class="reference internal" href="#version-2-6">Version 2.6</a></li>
+<li><a class="reference internal" href="#version-2-5">Version 2.5</a></li>
+<li><a class="reference internal" href="#version-2-4">Version 2.4</a></li>
+<li><a class="reference internal" href="#version-2-3">Version 2.3</a></li>
+<li><a class="reference internal" href="#version-2-2">Version 2.2</a></li>
+<li><a class="reference internal" href="#version-2-1">Version 2.1</a></li>
+<li><a class="reference internal" href="#version-2-0">Version 2.0</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Proxy%20Settings.html"
+                        title="previous chapter">Proxy Settings</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Modules%20and%20Classes.html"
+                        title="next chapter">Modules and Classes</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Changelog.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Modules%20and%20Classes.html" title="Modules and Classes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Proxy%20Settings.html" title="Proxy Settings"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Changelog</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

@@ -26,7 +26,10 @@ def getUrlData(url, data=None, returnBytes=False):
 
 
 class metaError(Exception):
-    """Exception, a error in metadataXML"""
+    """Exception, a error in metadataXML
+    
+    :param message: a message to pass with the exception
+    """
     def __init__(self, message):
         self.message = message
     def __str__(self):

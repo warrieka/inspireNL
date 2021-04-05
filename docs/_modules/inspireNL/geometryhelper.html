@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>inspireNL.geometryhelper &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <script src="../../_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.geometryhelper</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for inspireNL.geometryhelper</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="kn">from</span> <span class="nn">qgis.core</span> <span class="kn">import</span> <span class="n">QgsPoint</span><span class="p">,</span> <span class="n">QgsCoordinateTransform</span><span class="p">,</span> <span class="n">QgsCoordinateReferenceSystem</span><span class="p">,</span> <span class="n">QgsGeometry</span><span class="p">,</span> <span class="n">QgsRectangle</span><span class="p">,</span> <span class="n">QgsProject</span>
+<span class="kn">from</span> <span class="nn">qgis.PyQt.QtGui</span> <span class="kn">import</span> <span class="n">QColor</span>
+<span class="kn">from</span> <span class="nn">qgis.gui</span> <span class="kn">import</span> <span class="n">QgsVertexMarker</span>
+
+<div class="viewcode-block" id="geometryHelper"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper">[docs]</a><span class="k">class</span> <span class="nc">geometryHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Several tools to modify geometry etc.</span>
+
+<span class="sd">    :param iface: A QGIS interface instance.</span>
+<span class="sd">    :type iface: QgsInterface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span> <span class="p">,</span> <span class="n">iface</span> <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span> <span class="o">=</span> <span class="n">iface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas</span> <span class="o">=</span> <span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adreslayerid</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    
+<div class="viewcode-block" id="geometryHelper.getGetMapCrs"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.getGetMapCrs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">getGetMapCrs</span><span class="p">(</span><span class="n">iface</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get CRS of the current mapCanvas.</span>
+<span class="sd">        </span>
+<span class="sd">        :param iface: A QGIS interface instance.</span>
+<span class="sd">        :type iface: QgsInterface</span>
+<span class="sd">        :return:  QgsCoordinateReferenceSystem of the current mapCanvas.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">mapSettings</span><span class="p">()</span><span class="o">.</span><span class="n">destinationCrs</span><span class="p">()</span> </div>
+        
+<div class="viewcode-block" id="geometryHelper.prjPtToMapCrs"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.prjPtToMapCrs">[docs]</a>    <span class="k">def</span> <span class="nf">prjPtToMapCrs</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">xy</span> <span class="p">,</span> <span class="n">fromCRS</span><span class="o">=</span><span class="mi">4326</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Project point xy form fromCrs to the CRS of mapCanvas.</span>
+<span class="sd">        </span>
+<span class="sd">        :param xy: a QGSpoint object</span>
+<span class="sd">        :param fromCRS: the CRSid of xy</span>
+<span class="sd">        :return: QGSpoint in the CRS of mapCanvas.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fromCrs</span> <span class="o">=</span> <span class="n">QgsCoordinateReferenceSystem</span><span class="p">(</span><span class="n">fromCRS</span><span class="p">)</span>
+        <span class="n">toCrs</span> <span class="o">=</span>   <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">mapSettings</span><span class="p">()</span><span class="o">.</span><span class="n">destinationCrs</span><span class="p">()</span> 
+        <span class="n">xform</span> <span class="o">=</span>   <span class="n">QgsCoordinateTransform</span><span class="p">(</span> <span class="n">fromCrs</span><span class="p">,</span> <span class="n">toCrs</span><span class="p">,</span> <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span> <span class="p">)</span>
+        <span class="k">return</span>    <span class="n">xform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span> <span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span></div>
+    
+<div class="viewcode-block" id="geometryHelper.prjPtFromMapCrs"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.prjPtFromMapCrs">[docs]</a>    <span class="k">def</span> <span class="nf">prjPtFromMapCrs</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">xy</span> <span class="p">,</span> <span class="n">toCRS</span><span class="o">=</span><span class="mi">31370</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Project point xy from the CRS of mapCanvas to toCrs.</span>
+<span class="sd">        </span>
+<span class="sd">        :param xy: a QGSpoint object</span>
+<span class="sd">        :param toCRS: the CRSid of xy</span>
+<span class="sd">        :return: QGSpoint in toCRS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">toCrs</span> <span class="o">=</span> <span class="n">QgsCoordinateReferenceSystem</span><span class="p">(</span><span class="n">toCRS</span><span class="p">)</span>
+        <span class="n">fromCrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">mapSettings</span><span class="p">()</span><span class="o">.</span><span class="n">destinationCrs</span><span class="p">()</span> 
+        <span class="n">xform</span> <span class="o">=</span> <span class="n">QgsCoordinateTransform</span><span class="p">(</span> <span class="n">fromCrs</span><span class="p">,</span> <span class="n">toCrs</span><span class="p">,</span> <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span> <span class="p">)</span>
+        <span class="k">return</span>   <span class="n">xform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span> <span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="geometryHelper.prjLineFromMapCrs"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.prjLineFromMapCrs">[docs]</a>    <span class="k">def</span> <span class="nf">prjLineFromMapCrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lineString</span><span class="p">,</span> <span class="n">toCRS</span><span class="o">=</span><span class="mi">4326</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Project lineString from the CRS of mapCanvas to toCrs.</span>
+<span class="sd">        </span>
+<span class="sd">        :param xy: a QGSgeometry object, must be a line</span>
+<span class="sd">        :param toCRS: the CRSid of xy</span>
+<span class="sd">        :return: QgsGeometry in toCrs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fromCrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">mapSettings</span><span class="p">()</span><span class="o">.</span><span class="n">destinationCrs</span><span class="p">()</span> 
+        <span class="n">toCrs</span> <span class="o">=</span> <span class="n">QgsCoordinateReferenceSystem</span><span class="p">(</span><span class="n">toCRS</span><span class="p">)</span>
+        <span class="n">xform</span> <span class="o">=</span> <span class="n">QgsCoordinateTransform</span><span class="p">(</span><span class="n">fromCrs</span><span class="p">,</span> <span class="n">toCrs</span><span class="p">,</span> <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">())</span>
+        <span class="n">wgsLine</span> <span class="o">=</span> <span class="p">[</span> <span class="n">xform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span> <span class="n">xy</span> <span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span>  <span class="n">lineString</span><span class="o">.</span><span class="n">asPolyline</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="n">QgsGeometry</span><span class="o">.</span><span class="n">fromPolyline</span><span class="p">(</span> <span class="n">wgsLine</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="geometryHelper.prjLineToMapCrs"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.prjLineToMapCrs">[docs]</a>    <span class="k">def</span> <span class="nf">prjLineToMapCrs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lineString</span><span class="p">,</span> <span class="n">fromCRS</span><span class="o">=</span><span class="mi">4326</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Project lineString from  fromCRS to the CRS of mapCanvas.</span>
+<span class="sd">        </span>
+<span class="sd">        :param xy: a QGSgeometry object, must be a line</span>
+<span class="sd">        :param toCRS: the CRSid of xy</span>
+<span class="sd">        :return: QgsGeometry in toCrs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fromCrs</span> <span class="o">=</span> <span class="n">QgsCoordinateReferenceSystem</span><span class="p">(</span><span class="n">fromCRS</span><span class="p">)</span>
+        <span class="n">toCrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">mapSettings</span><span class="p">()</span><span class="o">.</span><span class="n">destinationCrs</span><span class="p">()</span> 
+        <span class="n">xform</span> <span class="o">=</span> <span class="n">QgsCoordinateTransform</span><span class="p">(</span><span class="n">fromCrs</span><span class="p">,</span> <span class="n">toCrs</span><span class="p">,</span> <span class="n">QgsProject</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span> <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lineString</span><span class="p">,</span> <span class="n">QgsGeometry</span><span class="p">):</span>
+            <span class="n">wgsLine</span> <span class="o">=</span> <span class="p">[</span> <span class="n">xform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span> <span class="n">xy</span> <span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span>  <span class="n">lineString</span><span class="o">.</span><span class="n">asPolyline</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">lineString</span><span class="p">,</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">):</span>
+            <span class="n">wgsLine</span> <span class="o">=</span> <span class="p">[</span> <span class="n">xform</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span> <span class="n">QgsPoint</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span>  <span class="n">lineString</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">QgsGeometry</span><span class="o">.</span><span class="n">fromPolyline</span><span class="p">(</span> <span class="n">wgsLine</span> <span class="p">)</span></div>
+
+<div class="viewcode-block" id="geometryHelper.zoomtoRec"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.zoomtoRec">[docs]</a>    <span class="k">def</span> <span class="nf">zoomtoRec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xyMin</span><span class="p">,</span> <span class="n">xyMax</span> <span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;zoom to rectangle from 2 points with given crs, default= mapCRS</span>
+<span class="sd">        </span>
+<span class="sd">        :param xyMin: a QgsPoint of the left undercorner of the rectangle</span>
+<span class="sd">        :param xyMax: a QgsPoint of the right uppercorner of the rectangle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getGetMapCrs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="p">)</span>
+            
+        <span class="n">maxpoint</span> <span class="o">=</span> <span class="n">QgsPoint</span><span class="p">(</span><span class="n">xyMax</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xyMax</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">minpoint</span> <span class="o">=</span> <span class="n">QgsPoint</span><span class="p">(</span><span class="n">xyMin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xyMin</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        
+        <span class="n">pmaxpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prjPtToMapCrs</span><span class="p">(</span><span class="n">maxpoint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="n">pminpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prjPtToMapCrs</span><span class="p">(</span><span class="n">minpoint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        
+        <span class="c1"># Create a rectangle to cover the new extent</span>
+        <span class="n">rect</span> <span class="o">=</span> <span class="n">QgsRectangle</span><span class="p">(</span> <span class="n">pmaxpoint</span><span class="p">,</span> <span class="n">pminpoint</span> <span class="p">)</span>
+    
+        <span class="c1"># Set the extent to our new rectangle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">setExtent</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+        <span class="c1"># Refresh the map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="geometryHelper.zoomtoRec2"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.zoomtoRec2">[docs]</a>    <span class="k">def</span> <span class="nf">zoomtoRec2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;zoom to rectangle from a list containing: [xmin,ymin,xmax,ymax] with given crs, default= mapCRS</span>
+<span class="sd">        </span>
+<span class="sd">        :param bounds: a List in the form: [xmax, ymax, xmin, ymin].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">bounds</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getGetMapCrs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="p">)</span>
+            
+        <span class="n">maxpoint</span> <span class="o">=</span> <span class="n">QgsPoint</span><span class="p">(</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">minpoint</span> <span class="o">=</span> <span class="n">QgsPoint</span><span class="p">(</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        
+        <span class="n">pmaxpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prjPtToMapCrs</span><span class="p">(</span><span class="n">maxpoint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="n">pminpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prjPtToMapCrs</span><span class="p">(</span><span class="n">minpoint</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+      
+        <span class="c1"># Create a rectangle to cover the new extent</span>
+        <span class="n">rect</span> <span class="o">=</span> <span class="n">QgsRectangle</span><span class="p">(</span> <span class="n">pmaxpoint</span><span class="p">,</span> <span class="n">pminpoint</span> <span class="p">)</span>
+    
+        <span class="c1"># Set the extent to our new rectangle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">setExtent</span><span class="p">(</span><span class="n">rect</span><span class="p">)</span>
+        <span class="c1"># Refresh the map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iface</span><span class="o">.</span><span class="n">mapCanvas</span><span class="p">()</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+      
+<div class="viewcode-block" id="geometryHelper.addPointGraphic"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.geometryhelper.geometryHelper.addPointGraphic">[docs]</a>    <span class="k">def</span> <span class="nf">addPointGraphic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#FFFF00&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pen</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">markerType</span><span class="o">=</span><span class="n">QgsVertexMarker</span><span class="o">.</span><span class="n">ICON_BOX</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;create a point Graphic at location xy and return it</span>
+<span class="sd">        </span>
+<span class="sd">        :param xy: list in the form [x,y] or QgsPoint</span>
+<span class="sd">        :param color: the color of the icon</span>
+<span class="sd">        :param size: icon size in mm</span>
+<span class="sd">        :param pen: outline width in mm</span>
+<span class="sd">        :param markerType: the type of the form of the QgsVertexMarker: ICON_NONE, ICON_CROSS, ICON_X, ICON_BOX, ICON_CIRCLE, ICON_DOUBLE_TRIANGLE </span>
+<span class="sd">        :return: the created graphic (QgsVertexMarker)&quot;&quot;&quot;</span>
+        <span class="s2">&quot;create a point Graphic at location xy and return it&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span> <span class="n">xy</span> <span class="p">)[:</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">QgsVertexMarker</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">setCenter</span><span class="p">(</span><span class="n">QgsPoint</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="n">color</span><span class="p">))</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">setIconSize</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">setIconType</span><span class="p">(</span><span class="n">markerType</span><span class="p">)</span> 
+        <span class="n">m</span><span class="o">.</span><span class="n">setPenWidth</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">m</span></div></div>
+    
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.geometryhelper</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

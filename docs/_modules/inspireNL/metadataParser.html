@@ -1,0 +1,629 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>inspireNL.metadataParser &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <script src="../../_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.metadataParser</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for inspireNL.metadataParser</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlencode</span><span class="p">,</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urlparse</span><span class="p">,</span> <span class="n">parse_qsl</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span> <span class="nn">.webUtil</span> <span class="kn">import</span> <span class="n">getUrlData</span><span class="p">,</span> <span class="n">metaError</span>
+
+<span class="n">CSW_URL</span> <span class="o">=</span> <span class="s2">&quot;https://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire&quot;</span>
+
+
+<div class="viewcode-block" id="MDdata"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDdata">[docs]</a><span class="k">class</span> <span class="nc">MDdata</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadataXML</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse a CSW-metadataXML </span>
+<span class="sd">    </span>
+<span class="sd">        :param metadataXML: a CSW-metadata XMLdocument</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metadataXML</span><span class="p">:</span> <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span> <span class="n">metadataXML</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;numberOfRecordsMatched&quot;</span><span class="p">]</span> <span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">mds</span> <span class="o">=</span> <span class="n">metadataXML</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/cat/csw/2.0.2}Record&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">mds</span><span class="p">:</span>
+           <span class="n">record</span> <span class="o">=</span> <span class="p">{}</span>
+           <span class="n">identifier</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://purl.org/dc/elements/1.1/}identifier&quot;</span><span class="p">)</span>
+           <span class="n">title</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{http://purl.org/dc/elements/1.1/}title&#39;</span><span class="p">)</span> 
+
+           <span class="k">if</span> <span class="n">identifier</span> <span class="o">==</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">identifier</span><span class="o">.</span><span class="n">text</span><span class="p">:</span> <span class="k">continue</span> 
+
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;uuid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">identifier</span><span class="o">.</span><span class="n">text</span>
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span>
+
+           <span class="n">description</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{http://purl.org/dc/elements/1.1/}description&#39;</span><span class="p">)</span>
+           <span class="k">if</span> <span class="p">(</span><span class="n">description</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">):</span>
+              <span class="n">record</span><span class="p">[</span><span class="s1">&#39;abstract&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span><span class="o">.</span><span class="n">text</span> <span class="k">if</span> <span class="n">description</span><span class="o">.</span><span class="n">text</span> <span class="o">!=</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+
+           <span class="n">bbox</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{http://www.opengis.net/ows}BoundingBox&#39;</span><span class="p">)</span>
+           <span class="k">if</span> <span class="p">(</span><span class="n">bbox</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">):</span> 
+               <span class="n">LowerCorner</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{http://www.opengis.net/ows}LowerCorner&#39;</span><span class="p">)</span>
+               <span class="n">UpperCorner</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;{http://www.opengis.net/ows}UpperCorner&#39;</span><span class="p">)</span>
+               <span class="k">if</span> <span class="n">LowerCorner</span> <span class="ow">and</span> <span class="n">UpperCorner</span><span class="p">:</span> 
+                   <span class="n">record</span><span class="p">[</span><span class="s1">&#39;geoBox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">LowerCorner</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">UpperCorner</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)]</span>
+               <span class="k">else</span><span class="p">:</span>
+                   <span class="n">record</span><span class="p">[</span><span class="s1">&#39;geoBox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.1</span><span class="p">,</span> <span class="mf">50.6</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">,</span> <span class="mf">53.6</span><span class="p">]</span>
+           <span class="k">else</span><span class="p">:</span> 
+               <span class="n">record</span><span class="p">[</span><span class="s1">&#39;geoBox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.1</span><span class="p">,</span> <span class="mf">50.6</span><span class="p">,</span> <span class="mf">7.4</span><span class="p">,</span> <span class="mf">53.6</span><span class="p">]</span>
+           
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;wms&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">_findWXS</span><span class="p">(</span> <span class="n">md</span><span class="p">,</span> <span class="s2">&quot;OGC:WMS&quot;</span> <span class="p">)</span>
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;wfs&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">_findWXS</span><span class="p">(</span> <span class="n">md</span><span class="p">,</span> <span class="s2">&quot;OGC:WFS&quot;</span> <span class="p">)</span>
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;wcs&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">_findWXS</span><span class="p">(</span> <span class="n">md</span><span class="p">,</span> <span class="s2">&quot;OGC:WCS&quot;</span> <span class="p">)</span>
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;wmts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_findWXS</span><span class="p">(</span> <span class="n">md</span><span class="p">,</span> <span class="s2">&quot;OGC:WMTS&quot;</span><span class="p">)</span>
+           <span class="n">record</span><span class="p">[</span><span class="s1">&#39;download&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_findDownloads</span><span class="p">(</span> <span class="n">md</span> <span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+           
+    <span class="k">def</span> <span class="nf">_findWXS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span> <span class="kc">None</span> <span class="p">):</span>
+        <span class="n">links</span> <span class="o">=</span>    <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://purl.org/dc/elements/1.1/}URI&quot;</span><span class="p">)</span> 
+                            <span class="k">if</span> <span class="s2">&quot;protocol&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span> <span class="ow">and</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">protocol</span><span class="p">]</span> 
+        <span class="n">links</span> <span class="o">+=</span>   <span class="p">[</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://purl.org/dc/elements/1.1/}URI&quot;</span><span class="p">)</span>
+                     <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span>
+                     <span class="ow">and</span> <span class="s1">&#39;SERVICE&#39;</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span> <span class="n">parse_qsl</span><span class="p">(</span> <span class="n">urlparse</span><span class="p">(</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="p">)</span><span class="o">.</span><span class="n">query</span> <span class="p">))</span>  
+                     <span class="ow">and</span> <span class="nb">dict</span><span class="p">(</span><span class="n">parse_qsl</span><span class="p">(</span><span class="n">urlparse</span><span class="p">(</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="p">)</span><span class="o">.</span><span class="n">query</span><span class="p">))[</span><span class="s1">&#39;SERVICE&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">protocol</span> <span class="p">]</span>   
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="n">name</span> <span class="o">=</span> <span class="n">links</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">links</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attrib</span> <span class="k">else</span> <span class="n">links</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">links</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_findDownloads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="n">links</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://purl.org/dc/elements/1.1/}URI&quot;</span><span class="p">)</span> 
+                                <span class="k">if</span> <span class="s2">&quot;protocol&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span> <span class="ow">and</span> <span class="s2">&quot;DOWNLOAD&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="p">]</span> 
+        <span class="n">atoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://purl.org/dc/elements/1.1/}URI&quot;</span><span class="p">)</span> 
+                                <span class="k">if</span> <span class="s2">&quot;protocol&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span> <span class="ow">and</span> <span class="s2">&quot;ATOM&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="p">]</span> 
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">links</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">atoms</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">in</span> <span class="n">n</span><span class="o">.</span><span class="n">attrib</span> <span class="k">else</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span> <span class="p">,</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span> <span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">links</span> <span class="p">]</span>
+            <span class="k">return</span> <span class="n">results</span>
+    
+        <span class="n">atom</span> <span class="o">=</span> <span class="n">atoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>    
+            <span class="n">resp</span><span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ET</span><span class="o">.</span><span class="n">ParseError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;WARNING: Geen correcte xml:  </span><span class="si">{}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">except</span> <span class="n">metaError</span> <span class="k">as</span> <span class="n">me</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;WARNING: http-fout </span><span class="si">{}</span><span class="s2"> -&gt; geeft </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">me</span><span class="o">.</span><span class="n">message</span><span class="p">)</span> <span class="p">)</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="n">entries</span> <span class="o">=</span>  <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;.//{http://www.w3.org/2005/Atom}entry&quot;</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">find</span><span class="p">(</span> <span class="s2">&quot;{http://www.w3.org/2005/Atom}link&quot;</span><span class="p">)</span>
+            <span class="n">titleNode</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="n">find</span><span class="p">(</span> <span class="s2">&quot;{http://www.w3.org/2005/Atom}title&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">titleNode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s2">&quot;href&quot;</span> <span class="ow">in</span> <span class="n">dl</span><span class="o">.</span><span class="n">attrib</span><span class="p">:</span> 
+               <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">[</span> <span class="n">titleNode</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">dl</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;href&quot;</span><span class="p">]</span> <span class="p">]</span> <span class="p">)</span>  
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="MDReader"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDReader">[docs]</a><span class="k">class</span> <span class="nc">MDReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Interact with CSW-service, to get info</span>
+<span class="sd">    </span>
+<span class="sd">    :param proxyUrl: the proxy to use for internet calls</span>
+<span class="sd">    :param timeout: the timeout for internet calls</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geoNetworkUrl</span> <span class="o">=</span>  <span class="n">CSW_URL</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataTypes</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;Dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">],[</span><span class="s2">&quot;Service&quot;</span><span class="p">,</span><span class="s2">&quot;service&quot;</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inspireServiceTypes</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;discovery&quot;</span><span class="p">,</span><span class="s2">&quot;download&quot;</span><span class="p">,</span><span class="s2">&quot;view&quot;</span><span class="p">,</span><span class="s2">&quot;other&quot;</span><span class="p">]</span>
+        
+    <span class="k">def</span> <span class="nf">_createFindUrl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">maxRecords</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">orgName</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">dataType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span> 
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoNetworkUrl</span> 
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="c1">#escape &#39;-sign&#39;s in CQL </span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">orgName</span> <span class="o">=</span> <span class="n">orgName</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">inspiretheme</span> <span class="o">=</span> <span class="n">inspiretheme</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="c1">#make CQL query</span>
+        <span class="n">CQLparts</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">if</span> <span class="n">inspiretheme</span><span class="p">:</span> 
+            <span class="n">CQLparts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;(Subject LIKE &#39;%&quot;</span><span class="o">+</span> <span class="n">inspiretheme</span> <span class="o">+</span><span class="s2">&quot;%&#39; AND AnyText = &#39;GEMET - INSPIRE themes, version 1.0&#39;)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="n">CQLparts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; AnyText LIKE &#39;%&quot;</span> <span class="o">+</span> <span class="n">q</span> <span class="o">+</span> <span class="s2">&quot;%&#39; &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">orgName</span><span class="p">:</span> 
+            <span class="n">CQLparts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; OrganisationName = &#39;&quot;</span> <span class="o">+</span> <span class="n">orgName</span> <span class="o">+</span> <span class="s2">&quot;&#39; &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dataType</span><span class="p">:</span> 
+            <span class="n">CQLparts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; type = &#39;&quot;</span> <span class="o">+</span> <span class="n">dataType</span> <span class="o">+</span> <span class="s2">&quot;&#39; &quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inspireServiceType</span><span class="p">:</span> 
+            <span class="n">CQLparts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot; ServiceType = &#39;&quot;</span> <span class="o">+</span> <span class="n">inspireServiceType</span> <span class="o">+</span> <span class="s2">&quot;&#39; &quot;</span><span class="p">)</span>
+
+        <span class="n">CQL</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">CQLparts</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;request&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;GetRecords&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;service&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CSW&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;2.0.2&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;elementsetname&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;full&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;typenames&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;gmd:MD_Metadata&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;RESULTTYPE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;results&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;constraintLanguage&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CQL_TEXT&quot;</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;constraint_language_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1.1.0&quot;</span>          
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;maxRecords&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">maxRecords</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;startPosition&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;constraint&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CQL</span>
+                
+        <span class="n">values</span> <span class="o">=</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">url</span> <span class="o">+</span><span class="s2">&quot;?&quot;</span><span class="o">+</span> <span class="n">values</span>
+          
+<div class="viewcode-block" id="MDReader.list_inspire_theme"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDReader.list_inspire_theme">[docs]</a>    <span class="k">def</span> <span class="nf">list_inspire_theme</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List the inspire-themes</span>
+<span class="sd">        </span>
+<span class="sd">        :return: a list containing the inspire themes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span> <span class="s2">&quot;Administratieve eenheden&quot;</span><span class="p">,</span> <span class="s2">&quot;Adressen&quot;</span><span class="p">,</span> <span class="s2">&quot;Atmosferische omstandigheden&quot;</span><span class="p">,</span> <span class="s2">&quot;Beschermde gebieden&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Biogeografische gebieden&quot;</span><span class="p">,</span> <span class="s2">&quot;Bodem&quot;</span><span class="p">,</span> <span class="s2">&quot;Bodemgebruik&quot;</span><span class="p">,</span> <span class="s2">&quot;Energiebronnen&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;Faciliteiten voor landbouw en aquacultuur&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Faciliteiten voor productie en industrie&quot;</span><span class="p">,</span> <span class="s2">&quot;Gebieden met natuurrisico&#39;s&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Gebiedsbeheer, gebieden waar beperkingen gelden, gereguleerde gebieden en rapportage-eenheden&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Gebouwen&quot;</span><span class="p">,</span> <span class="s2">&quot;Geografisch rastersysteem&quot;</span><span class="p">,</span> <span class="s2">&quot;Geografische namen&quot;</span><span class="p">,</span> <span class="s2">&quot;Geologie&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Habitats en biotopen&quot;</span><span class="p">,</span> <span class="s2">&quot;Hoogte&quot;</span><span class="p">,</span> <span class="s2">&quot;Hydrografie&quot;</span><span class="p">,</span> <span class="s2">&quot;Kadastrale percelen&quot;</span><span class="p">,</span> <span class="s2">&quot;Landgebruik&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;Menselijke gezondheid en veiligheid&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Meteorologische geografische kenmerken&quot;</span><span class="p">,</span> <span class="s2">&quot;Milieubewakingsvoorzieningen&quot;</span><span class="p">,</span> <span class="s2">&quot;Minerale bronnen&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;Nutsdiensten en overheidsdiensten&quot;</span><span class="p">,</span> <span class="s2">&quot;Oceanografische geografische kenmerken&quot;</span><span class="p">,</span> <span class="s2">&quot;Orthobeeldvorming&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;Spreiding van de bevolking — demografie&quot;</span><span class="p">,</span> <span class="s2">&quot;Spreiding van soorten&quot;</span><span class="p">,</span> <span class="s2">&quot;Statistische eenheden&quot;</span><span class="p">,</span> 
+            <span class="s2">&quot;Systemen voor verwijzing door middel van coördinaten&quot;</span><span class="p">,</span> <span class="s2">&quot;Vervoersnetwerken&quot;</span><span class="p">,</span> <span class="s2">&quot;Zeegebieden&quot;</span> <span class="p">]</span></div>
+    
+<div class="viewcode-block" id="MDReader.list_suggestionKeyword"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDReader.list_suggestionKeyword">[docs]</a>    <span class="k">def</span> <span class="nf">list_suggestionKeyword</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List the Keywords</span>
+<span class="sd">        </span>
+<span class="sd">        :return: a list with the Keywords</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoNetworkUrl</span> <span class="o">+</span> <span class="s2">&quot;?request=GetDomain&amp;service=CSW&amp;version=2.0.2&amp;PropertyName=Subject&quot;</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+        <span class="k">return</span> <span class="p">[</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;.//{http://www.opengis.net/cat/csw/2.0.2}Value&#39;</span><span class="p">)</span> <span class="p">]</span></div>
+
+<div class="viewcode-block" id="MDReader.list_organisations"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDReader.list_organisations">[docs]</a>    <span class="k">def</span> <span class="nf">list_organisations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;List the organisations</span>
+<span class="sd">        </span>
+<span class="sd">        :return: a list with the organisations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">geoNetworkUrl</span> <span class="o">+</span> <span class="s1">&#39;?request=GetDomain&amp;service=CSW&amp;version=2.0.2&amp;PropertyName=OrganisationName&#39;</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+        <span class="n">organisations</span> <span class="o">=</span> <span class="p">[</span> <span class="n">n</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;.//{http://www.opengis.net/cat/csw/2.0.2}Value&#39;</span><span class="p">)</span> <span class="p">]</span>
+        <span class="n">organisations</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">organisations</span></div>
+
+    <span class="k">def</span> <span class="nf">_search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">orgName</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">dataType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>  <span class="n">inspireServiceType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Search the csw with the following parameters:</span>
+<span class="sd">        </span>
+<span class="sd">        :param q: free text to seach for</span>
+<span class="sd">        :param start: initial postion of the searchresult </span>
+<span class="sd">        :param step: size of the searchresult</span>
+<span class="sd">        :param orgName: filter on the name of a organisation</span>
+<span class="sd">        :param dataType: filter on the type of record: service or dataset </span>
+<span class="sd">        :param inspiretheme: filter on inspiretheme</span>
+<span class="sd">        :param inspireServiceType: filter on inspire serviceType</span>
+<span class="sd">        :return: a XMLdocument with the results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_createFindUrl</span><span class="p">(</span> <span class="n">q</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">orgName</span><span class="p">,</span> <span class="n">dataType</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="MDReader.searchAll"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.MDReader.searchAll">[docs]</a>    <span class="k">def</span> <span class="nf">searchAll</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">orgName</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">dataType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Search the csw, making multiple calls in case of large resultsets, with the following parameters:</span>
+<span class="sd">        </span>
+<span class="sd">        :param q: free text to seach for</span>
+<span class="sd">        :param orgName: filter on the name of a organisation</span>
+<span class="sd">        :param dataType: filter on the type of record: service or dataset </span>
+<span class="sd">        :param inspiretheme: filter on inspiretheme</span>
+<span class="sd">        :param inspireServiceType: filter on inspire serviceType</span>
+<span class="sd">        :return: a composite XMLdocument with the results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start</span><span class="o">=</span> <span class="mi">1</span>
+        <span class="n">step</span><span class="o">=</span> <span class="mi">100</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">orgName</span><span class="p">,</span> <span class="n">dataType</span><span class="p">,</span> <span class="n">inspiretheme</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="p">)</span>
+        <span class="n">searchResult</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.//{http://www.opengis.net/cat/csw/2.0.2}SearchResults&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">searchResult</span><span class="p">:</span> 
+            <span class="k">return</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span> <span class="n">searchResult</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;numberOfRecordsMatched&quot;</span><span class="p">]</span> <span class="p">)</span>
+        <span class="n">start</span> <span class="o">+=</span> <span class="n">step</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">count</span><span class="p">:</span>  
+           <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">orgName</span><span class="p">,</span> <span class="n">dataType</span><span class="p">,</span><span class="n">inspiretheme</span><span class="p">,</span> <span class="n">inspireServiceType</span><span class="p">)</span>
+           <span class="n">mds</span><span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;.//{http://www.opengis.net/cat/csw/2.0.2}Record&quot;</span><span class="p">)</span>
+           <span class="k">for</span> <span class="n">md</span> <span class="ow">in</span> <span class="n">mds</span><span class="p">:</span> <span class="n">searchResult</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">md</span> <span class="p">)</span>
+           <span class="n">start</span> <span class="o">+=</span> <span class="n">step</span>
+
+        <span class="n">mdata</span> <span class="o">=</span> <span class="n">MDdata</span><span class="p">(</span> <span class="n">searchResult</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mdata</span></div></div>
+
+   
+<div class="viewcode-block" id="getWmsLayerNames"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.getWmsLayerNames">[docs]</a><span class="k">def</span> <span class="nf">getWmsLayerNames</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all the thr layers in a WMS</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the getcapabilities url of the WMS</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: a list of tuples in de form: [(name, title, style ), ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">capability</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;?request=GetCapabilities&amp;version=1.3.0&amp;service=wms&quot;</span>
+    
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">capability</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+    <span class="n">layers</span> <span class="o">=</span>  <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;.//{http://www.opengis.net/wms}Layer&quot;</span> <span class="p">)</span>
+    <span class="n">layerNames</span><span class="o">=</span><span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+        <span class="n">name</span><span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wms}Name&quot;</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wms}Title&quot;</span><span class="p">)</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wms}Style/{http://www.opengis.net/wms}Name&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">title</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+            <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">style</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">layerNames</span></div>
+
+<div class="viewcode-block" id="getWFSLayerNames"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.getWFSLayerNames">[docs]</a><span class="k">def</span> <span class="nf">getWFSLayerNames</span><span class="p">(</span> <span class="n">url</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all the layers in a WFS</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the getcapabilities url of the WFS</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: a list of tuples in de form: [(name, title, srs ), ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">capability</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;?request=GetCapabilities&amp;version=2.0.0&amp;service=wfs&quot;</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">capability</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+    <span class="n">layerNames</span><span class="o">=</span><span class="p">[]</span>
+    
+    <span class="c1">#default</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;2.0.0&quot;</span>
+    <span class="n">serv</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.//{http://www.opengis.net/ows/1.1}ServiceTypeVersion&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">serv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+        <span class="n">serv</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.//{http://www.opengis.net/ows}ServiceTypeVersion&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">serv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  
+        <span class="n">version</span> <span class="o">=</span> <span class="n">serv</span><span class="o">.</span><span class="n">text</span>
+    
+    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;2.0.0&quot;</span><span class="p">:</span> 
+        <span class="n">layers</span> <span class="o">=</span>  <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;.//{http://www.opengis.net/wfs/2.0}FeatureType&quot;</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">name</span><span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs/2.0}Name&quot;</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs/2.0}Title&quot;</span><span class="p">)</span>
+            <span class="n">srs</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs/2.0}DefaultCRS&quot;</span><span class="p">)</span>
+            
+            <span class="n">isComplex</span> <span class="o">=</span> <span class="n">testComplex</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="p">(</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">title</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+                <span class="k">if</span> <span class="n">srs</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;EPSG:28992&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">srs</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">isComplex</span><span class="p">))</span>          
+    <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;1.1.0&quot;</span><span class="p">:</span> 
+        <span class="n">layers</span> <span class="o">=</span>  <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;.//{http://www.opengis.net/wfs/2.0}FeatureType&quot;</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">name</span><span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}Name&quot;</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}Title&quot;</span><span class="p">)</span>
+            <span class="n">srs</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}DefaultCRS&quot;</span><span class="p">)</span>
+                        
+            <span class="n">isComplex</span> <span class="o">=</span> <span class="n">testComplex</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="p">(</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">title</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+                <span class="k">if</span> <span class="n">srs</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;EPSG:28992&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">srs</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">isComplex</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="n">layers</span> <span class="o">=</span>  <span class="n">result</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;.//{http://www.opengis.net/wfs}FeatureType&quot;</span> <span class="p">)</span>
+        <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">name</span><span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}Name&quot;</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}Title&quot;</span><span class="p">)</span>
+            <span class="n">srs</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wfs}SRS&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">title</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+                <span class="k">if</span> <span class="n">srs</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="s1">&#39;EPSG:28992&#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">srs</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span> <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span> <span class="s1">&#39;layerNames&#39;</span><span class="p">:</span> <span class="n">layerNames</span> <span class="p">}</span></div>
+
+<div class="viewcode-block" id="getWMTSlayersNames"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.getWMTSlayersNames">[docs]</a><span class="k">def</span> <span class="nf">getWMTSlayersNames</span><span class="p">(</span> <span class="n">url</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all the layers in a WMTS</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the getcapabilities url of the WCS</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: a list of tuples in de form: [(name, title, matrix, format, srs ), ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="s2">&quot;request=getcapabilities&quot;</span> <span class="ow">in</span> <span class="n">url</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="s2">&quot;service=wmts&quot;</span> <span class="ow">in</span> <span class="n">url</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+        <span class="n">capability</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;?service=WMTS&amp;request=Getcapabilities&amp;version=&quot;</span>
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="n">capability</span> <span class="o">=</span> <span class="n">url</span>
+
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">capability</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span>  
+    <span class="n">content</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">find</span><span class="p">(</span> <span class="s2">&quot;{http://www.opengis.net/wmts/1.0}Contents&quot;</span> <span class="p">)</span>
+    <span class="n">layers</span> <span class="o">=</span>  <span class="n">content</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;{http://www.opengis.net/wmts/1.0}Layer&quot;</span> <span class="p">)</span>
+    <span class="n">layerNames</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="n">matrixSets</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wmts/1.0}TileMatrixSet&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+        <span class="n">name</span><span class="o">=</span>    <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/ows/1.1}Identifier&quot;</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span>  <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/ows/1.1}Title&quot;</span><span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wmts/1.0}TileMatrixSetLink/{http://www.opengis.net/wmts/1.0}TileMatrixSet&quot;</span><span class="p">)</span>
+        <span class="nb">format</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/wmts/1.0}Format&quot;</span><span class="p">)</span>
+        
+        <span class="n">srsList</span> <span class="o">=</span> <span class="p">[</span> <span class="n">n</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/ows/1.1}SupportedCRS&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+                    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">matrixSets</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{http://www.opengis.net/ows/1.1}Identifier&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="o">==</span> <span class="n">matrix</span><span class="o">.</span><span class="n">text</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">srsList</span><span class="p">:</span> <span class="n">srs</span> <span class="o">=</span>  <span class="s2">&quot;EPSG:&quot;</span><span class="o">+</span> <span class="n">srsList</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> <span class="n">srs</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> 
+        
+        <span class="k">if</span> <span class="p">(</span> <span class="n">name</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">title</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="n">matrix</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span> <span class="nb">format</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+              <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">((</span> <span class="n">name</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">srs</span> <span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">layerNames</span></div>
+
+<div class="viewcode-block" id="getWCSlayerNames"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.getWCSlayerNames">[docs]</a><span class="k">def</span> <span class="nf">getWCSlayerNames</span><span class="p">(</span> <span class="n">url</span><span class="p">,</span> <span class="n">wcs_version</span><span class="o">=</span><span class="s2">&quot;1.1&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List all the layers in a WFS</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the getcapabilities url of the WCS</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param wcs_version: the version of WCS to use, supported versions: 2.0, 1.1, 1.0</span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: a list of tuples in de form:   [(Identifier, Title ), ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="n">capability</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;?request=GetCapabilities&amp;version=</span><span class="si">%s</span><span class="s2">.0&amp;service=WCS&quot;</span> <span class="o">%</span> <span class="n">wcs_version</span>
+
+    <span class="n">resp</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">capability</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">resp</span><span class="p">)</span> 
+
+    <span class="c1">#find namespaces to identify WCS-version returned</span>
+    <span class="n">namespaces</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([</span><span class="n">node</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">ET</span><span class="o">.</span><span class="n">iterparse</span><span class="p">(</span> <span class="n">StringIO</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="n">events</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;start-ns&#39;</span><span class="p">])])</span>
+    <span class="n">wcs_version</span> <span class="o">=</span> <span class="n">namespaces</span><span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span>
+    <span class="n">wcsNS</span> <span class="o">=</span> <span class="s2">&quot;http://www.opengis.net/wcs/&quot;</span> <span class="o">+</span> <span class="n">wcs_version</span>
+    <span class="n">owsNS</span> <span class="o">=</span> <span class="s2">&quot;http://www.opengis.net/ows/&quot;</span> <span class="o">+</span> <span class="n">wcs_version</span>
+
+    <span class="n">content</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">find</span><span class="p">(</span> <span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}Contents&quot;</span> <span class="o">%</span> <span class="n">wcsNS</span><span class="p">)</span>
+    
+    <span class="n">layers</span> <span class="o">=</span>  <span class="n">content</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span> <span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}CoverageSummary&quot;</span> <span class="o">%</span> <span class="n">wcsNS</span><span class="p">)</span>
+    <span class="n">layerNames</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">wcs_version</span> <span class="o">==</span><span class="s2">&quot;1.1&quot;</span><span class="p">:</span>
+       <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}Identifier&quot;</span> <span class="o">%</span> <span class="n">wcsNS</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}Title&quot;</span> <span class="o">%</span> <span class="n">owsNS</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+       <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span> <span class="n">layerNames</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}CoverageId&quot;</span> <span class="o">%</span> <span class="n">wcsNS</span><span class="p">)</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">lyr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;{</span><span class="si">%s</span><span class="s2">}CoverageId&quot;</span> <span class="o">%</span> <span class="n">wcsNS</span><span class="p">)</span><span class="o">.</span><span class="n">text</span> <span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">layerNames</span></div>
+
+<div class="viewcode-block" id="makeWFSuri"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.makeWFSuri">[docs]</a><span class="k">def</span> <span class="nf">makeWFSuri</span><span class="p">(</span> <span class="n">url</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">srsname</span><span class="o">=</span><span class="s2">&quot;EPSG:28992&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s1">&#39;1.0.0&#39;</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a QGIS-uri to load WFS-services.</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the base url of the wfs</span>
+<span class="sd">    :param name: The name of the layer</span>
+<span class="sd">    :param srsname: the crs as a string,this form &lt;auth&gt;:&lt;id&gt;, like EPSG:28992</span>
+<span class="sd">    :param version: WFS version: 1.0.0, 1.1.0 or 2.0.0</span>
+
+<span class="sd">    :return: the QGIS-uri</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>  <span class="s1">&#39;SERVICE&#39;</span><span class="p">:</span> <span class="s1">&#39;WFS&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;VERSION&#39;</span><span class="p">:</span> <span class="n">version</span> <span class="p">,</span>
+                <span class="s1">&#39;REQUEST&#39;</span><span class="p">:</span> <span class="s1">&#39;GetFeature&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;TYPENAME&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+                <span class="s1">&#39;SRSNAME&#39;</span><span class="p">:</span> <span class="n">srsname</span> <span class="p">}</span>
+    
+    <span class="n">uri</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="n">unquote</span><span class="p">(</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">uri</span></div>
+
+<div class="viewcode-block" id="makeWMTSuri"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.makeWMTSuri">[docs]</a><span class="k">def</span> <span class="nf">makeWMTSuri</span><span class="p">(</span> <span class="n">url</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">tileMatrixSet</span><span class="p">,</span> <span class="n">srsname</span><span class="o">=</span><span class="s2">&quot;EPSG:3857&quot;</span><span class="p">,</span> <span class="n">styles</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;image/png&#39;</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a QGIS-uri to load WMTS-services.</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the base url of the WMTS</span>
+<span class="sd">    :param name: The name of the layer</span>
+<span class="sd">    :param tileMatrixSet: The namae of the tileMatrixSet to use</span>
+<span class="sd">    :param srsname: the crs as a string,this form &lt;auth&gt;:&lt;id&gt;, like EPSG:28992</span>
+<span class="sd">    :param styles: the name(s) of the styles to use</span>
+<span class="sd">    :param format: the name of the mimetype of the output: image/png, image/jpeg, ...</span>
+
+<span class="sd">    :return: the QGIS-uri</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>  <span class="s1">&#39;tileMatrixSet&#39;</span><span class="p">:</span> <span class="n">tileMatrixSet</span><span class="p">,</span>
+                <span class="s1">&#39;styles&#39;</span><span class="p">:</span> <span class="n">styles</span><span class="p">,</span> 
+                <span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="nb">format</span> <span class="p">,</span>
+                <span class="s1">&#39;layers&#39;</span><span class="p">:</span> <span class="n">layer</span><span class="p">,</span>
+                <span class="s1">&#39;crs&#39;</span><span class="p">:</span> <span class="n">srsname</span><span class="p">,</span>
+                <span class="s1">&#39;contextualWMSLegend&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+                <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="p">}</span>
+    
+    <span class="n">uri</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>  <span class="p">)</span>
+    <span class="k">return</span> <span class="n">uri</span></div>
+
+<div class="viewcode-block" id="makeWCSuri"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.makeWCSuri">[docs]</a><span class="k">def</span> <span class="nf">makeWCSuri</span><span class="p">(</span> <span class="n">url</span><span class="p">,</span> <span class="n">layer</span> <span class="p">):</span>  
+    <span class="sd">&quot;&quot;&quot;Make a QGIS-uri to load WCS-services.</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the base url of the WMTS</span>
+<span class="sd">    :param layer: The name of the layer</span>
+
+<span class="sd">    :return: the QGIS-uri</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>  <span class="s1">&#39;dpiMode&#39;</span><span class="p">:</span> <span class="mi">7</span> <span class="p">,</span>
+                <span class="s1">&#39;identifier&#39;</span><span class="p">:</span> <span class="n">layer</span><span class="p">,</span>
+                <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>  <span class="p">}</span> 
+
+    <span class="n">uri</span> <span class="o">=</span> <span class="n">unquote</span><span class="p">(</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">)</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">uri</span> </div>
+      
+<div class="viewcode-block" id="testComplex"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.testComplex">[docs]</a><span class="k">def</span> <span class="nf">testComplex</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">typeName</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.1.0&quot;</span> <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Test if a WFS has complex features for a specific layer (typeName)</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the url of the WFS</span>
+<span class="sd">    :param typeName: the typeName of the layer to test for complex features</span>
+<span class="sd">    :param version: WFS version: 1.1.0 or 2.0.0</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: a boolean, true if the WFS has complex features</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;1.1.0&quot;</span><span class="p">,</span> <span class="s2">&quot;2.0.0&quot;</span><span class="p">]:</span> <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;1.1.0&quot;</span><span class="p">:</span> <span class="n">countStr</span> <span class="o">=</span> <span class="s2">&quot;maxFeatures&quot;</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;2.0.0&quot;</span><span class="p">:</span> <span class="n">countStr</span> <span class="o">=</span> <span class="s2">&quot;count&quot;</span>
+    
+    <span class="n">baseUrl</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> 
+    <span class="n">qryString</span> <span class="o">=</span> <span class="s2">&quot;?</span><span class="si">{}</span><span class="s2">=1&amp;SERVICE=WFS&amp;VERSION=</span><span class="si">{}</span><span class="s2">&amp;REQUEST=GetFeature&amp;TYPENAME=</span><span class="si">{}</span><span class="s2">&amp;outputFormat=json&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">countStr</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">typeName</span><span class="p">)</span>
+    <span class="n">fullUrl</span> <span class="o">=</span> <span class="n">baseUrl</span> <span class="o">+</span> <span class="n">qryString</span>
+    
+    <span class="k">try</span><span class="p">:</span> 
+        <span class="n">response</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">fullUrl</span><span class="p">)</span>
+        <span class="n">geojson</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> 
+        <span class="n">features</span> <span class="o">=</span> <span class="n">geojson</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">properties</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span> <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+            
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error in finding out WFS-complex:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+    
+<div class="viewcode-block" id="downloadWFS"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.downloadWFS">[docs]</a><span class="k">def</span> <span class="nf">downloadWFS</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">typeName</span><span class="p">,</span> <span class="n">outputLocation</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:4326&quot;</span><span class="p">,</span> <span class="n">maxCount</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.1.0&quot;</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Download a WFS as GML-file for a specific area</span>
+<span class="sd">    </span>
+<span class="sd">    :param url: the url of the WFS</span>
+<span class="sd">    :param typeName: the typeName of the layer to download</span>
+<span class="sd">    :param outputLocation: the path and filename of the output gml</span>
+<span class="sd">    :param maxCount: max number of features</span>
+<span class="sd">    :param version: WFS version: 1.1.0 or 2.0.0</span>
+<span class="sd">    :param bbox: limit the output to a certain area</span>
+<span class="sd">    :param proxyUrl: the url of the network proxy </span>
+<span class="sd">    :param timeout:  the timeout for internet calls</span>
+<span class="sd">    </span>
+<span class="sd">    :return: outputLocation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;1.1.0&quot;</span><span class="p">,</span> <span class="s2">&quot;2.0.0&quot;</span><span class="p">]:</span> 
+        <span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;1.1.0&quot;</span>
+    
+    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;1.1.0&quot;</span><span class="p">:</span> 
+        <span class="n">typeNameStr</span> <span class="o">=</span> <span class="s2">&quot;TYPENAME&quot;</span>
+        <span class="n">countStr</span> <span class="o">=</span> <span class="s2">&quot;maxFeatures&quot;</span>
+    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;2.0.0&quot;</span><span class="p">:</span>
+        <span class="n">typeNameStr</span> <span class="o">=</span> <span class="s2">&quot;TYPENAMES&quot;</span>
+        <span class="n">countStr</span> <span class="o">=</span> <span class="s2">&quot;count&quot;</span>
+    <span class="k">if</span> <span class="n">bbox</span><span class="p">:</span> <span class="n">bboxS</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">bbox</span><span class="p">])</span>
+    
+    <span class="c1"># Thijs Brentjens, suggestiont for workaround different axis order for 4258, 4326</span>
+    <span class="c1"># TODO: which CRSes should take into account different axis order for WFS download?</span>
+    <span class="k">if</span> <span class="s1">&#39;EPSG&#39;</span> <span class="ow">in</span> <span class="n">crs</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;4258&#39;</span> <span class="ow">in</span> <span class="n">crs</span> <span class="ow">or</span> <span class="s1">&#39;4326&#39;</span> <span class="ow">in</span> <span class="n">crs</span><span class="p">)</span> <span class="ow">and</span> <span class="n">bbox</span><span class="p">:</span>
+        <span class="n">bboxS</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="s1">&#39;,&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="s1">&#39;,&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">+</span><span class="s1">&#39;,&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>  
+    <span class="k">elif</span> <span class="n">bbox</span><span class="p">:</span> <span class="n">bboxS</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">bbox</span><span class="p">])</span>  
+    
+    <span class="n">baseUrl</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> 
+    <span class="n">qryString</span> <span class="o">=</span> <span class="s2">&quot;?</span><span class="si">{}</span><span class="s2">=</span><span class="si">{}</span><span class="s2">&amp;SERVICE=WFS&amp;VERSION=</span><span class="si">{}</span><span class="s2">&amp;REQUEST=GetFeature&amp;</span><span class="si">{}</span><span class="s2">=</span><span class="si">{}</span><span class="s2">&amp;srsName=</span><span class="si">{}</span><span class="s2">&amp;bbox=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                                <span class="n">countStr</span><span class="p">,</span> <span class="n">maxCount</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">typeNameStr</span><span class="p">,</span> <span class="n">typeName</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">bboxS</span><span class="p">)</span> 
+    <span class="n">fullUrl</span> <span class="o">=</span> <span class="n">baseUrl</span> <span class="o">+</span> <span class="n">qryString</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">getUrlData</span><span class="p">(</span><span class="n">fullUrl</span><span class="p">,</span> <span class="n">returnBytes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outputLocation</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+        <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">outputLocation</span></div>
+    
+<div class="viewcode-block" id="xmlIsEmpty"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.metadataParser.xmlIsEmpty">[docs]</a><span class="k">def</span> <span class="nf">xmlIsEmpty</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">gmlException</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;test if a xml file contais data</span>
+<span class="sd">    </span>
+<span class="sd">    :param xml_file: a path to a xml file. </span>
+<span class="sd">    :param gmlException: also return if gmlException</span>
+<span class="sd">    </span>
+<span class="sd">    return: True if empty else False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">xml_file</span><span class="p">)</span>  
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">gmlException</span> <span class="ow">and</span> <span class="s2">&quot;ExceptionReport&quot;</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        
+        <span class="k">return</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">inspireNL.metadataParser</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

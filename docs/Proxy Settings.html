@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Proxy Settings &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <script src="_static/sidebar.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="Changelog.html" />
+    <link rel="prev" title="Contributing and forking" href="Contributing%20and%20forking.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Changelog.html" title="Changelog"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="Contributing%20and%20forking.html" title="Contributing and forking"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Proxy Settings</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="proxy-settings">
+<h1>Proxy Settings<a class="headerlink" href="#proxy-settings" title="Permalink to this headline">¶</a></h1>
+<p>Many enterprises secure their network with intermediary proxy-server the inspects external data comming into their network and then sends it through to client. In the past the plugin sometimes had problems on picking up these redirects because of the limitations of urllib library that was used until version 2.6.</p>
+<p>Since version 2.7 of the plugin, the plugin uses the native methods of QGIS to make to http-API calls. Including calls to the Dutch INSPIRE <a class="reference external" href="https://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire?request=GetCapabilities&amp;service=CSW&amp;version=2.0.2">CSW-service</a>. This way all the QGIS-settings are used in a identical manner, so the user must configure everything only once.</p>
+<p>If QGIS does not automaticaly pick you enterprise Proxy.  You can configure this manually. Go on the menu-bar to <em>Settings/Options..</em> :</p>
+<img alt="_images/settingsMenu.png" src="_images/settingsMenu.png" />
+<p>Then to the tab <em>Network</em>. Here can enable using proxy’s and input the url and port if the system does not pick this up automaticaly:</p>
+<img alt="_images/network-settings.png" src="_images/network-settings.png" />
+<p>More info: <a class="reference external" href="https://docs.qgis.org/testing/en/docs/user_manual/introduction/qgis_configuration.html#network-settings">Network-Settings</a></p>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="Contributing%20and%20forking.html"
+                        title="previous chapter">Contributing and forking</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="Changelog.html"
+                        title="next chapter">Changelog</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Proxy Settings.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="Changelog.html" title="Changelog"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="Contributing%20and%20forking.html" title="Contributing and forking"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Proxy Settings</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Geonovum, Kay Warrie.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+  </body>
+</html>

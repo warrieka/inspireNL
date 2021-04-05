@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>654</width>
-    <height>553</height>
+    <width>636</width>
+    <height>590</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <iconset resource="resources.qrc">
     <normaloff>:/plugins/inspireNL/images/icon.png</normaloff>:/plugins/inspireNL/images/icon.png</iconset>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QTextBrowser" name="textBrowser">
      <property name="documentTitle">
@@ -72,8 +72,8 @@ p, li { white-space: pre-wrap; }
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>31</x>
+     <y>534</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>
@@ -88,8 +88,8 @@ p, li { white-space: pre-wrap; }
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
+     <x>31</x>
+     <y>534</y>
     </hint>
     <hint type="destinationlabel">
      <x>20</x>

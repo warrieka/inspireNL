@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_dataCatalog_dialog.ui'
+# Form implementation generated from reading ui file 'c:\work\prj\geonovum\inspireNL\ui_dataCatalog_dialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_dataCatalogDlg(object):
     def setupUi(self, dataCatalogDlg):
         dataCatalogDlg.setObjectName("dataCatalogDlg")
-        dataCatalogDlg.resize(722, 648)
+        dataCatalogDlg.resize(766, 643)
         dataCatalogDlg.setMinimumSize(QtCore.QSize(360, 400))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/plugins/inspireNL/images/inspireSearch.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -287,5 +289,4 @@ class Ui_dataCatalogDlg(object):
         self.addWMSaction.setText(_translate("dataCatalogDlg", "WMS toevoegen"))
         self.Download_action.setText(_translate("dataCatalogDlg", "Downloadpagina openen"))
         self.addWFSaction.setText(_translate("dataCatalogDlg", "WFS toevoegen"))
-
 from . import resources_rc

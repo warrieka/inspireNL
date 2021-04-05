@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "C:\\Users\\kaywa\\.conda\\envs\\qgis\\python.exe",
+    "python.envFile": "${workspaceFolder}/.env"
+}

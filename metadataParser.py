@@ -1,31 +1,33 @@
-# -*- coding: utf-8 -*-
-import urllib.request, urllib.error, urllib.parse, json, sys, os.path, datetime, json
+import json, sys, json
+from urllib.parse import urlencode, unquote
 import xml.etree.ElementTree as ET
+from io import StringIO
+from .webUtil import getUrlData
 
 CSW_URL = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire"
 
-class MDdata(object):
-    """Parse a CSW-metadataXML 
-    
-    :param metadataXML: a CSW-metadata XMLdocument
-    :param proxyUrl: the proxy to use for internet calls
-    :param timeout: the timeout for internet calls
-    """
-    def __init__(self, metadataXML, proxyUrl=None, timeout=5):
-        self._proxy = proxyUrl
-        self._timeout = timeout
-        self.count = 0 if not metadataXML else int( metadataXML.attrib["numberOfRecordsMatched"] ) 
-        self.records = []
 
+class MDdata(object):
+    count = 0
+    records = []
+    def __init__(self, metadataXML):
+        """Parse a CSW-metadataXML 
+    
+        :param metadataXML: a CSW-metadata XMLdocument
+        """
         if not metadataXML: return
+        self.count = int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         
         mds = metadataXML.findall("{http://www.opengis.net/cat/csw/2.0.2}Record")
         for md in mds:
            record = {}
-           if md.find("{http://purl.org/dc/elements/1.1/}identifier") == None or not md.find("{http://purl.org/dc/elements/1.1/}identifier").text: 
-               continue 
-           record['uuid'] = md.find("{http://purl.org/dc/elements/1.1/}identifier").text
-           record['title'] = md.find('{http://purl.org/dc/elements/1.1/}title').text
+           identifier = md.find("{http://purl.org/dc/elements/1.1/}identifier")
+           title = md.find('{http://purl.org/dc/elements/1.1/}title') 
+
+           if identifier == None or not identifier.text: continue 
+
+           record['uuid'] = identifier.text
+           record['title'] = title.text
 
            description = md.find('{http://purl.org/dc/elements/1.1/}description')
            if (description != None):
@@ -42,9 +44,9 @@ class MDdata(object):
            else: 
                record['geoBox'] = [3.1, 50.6, 7.4, 53.6]
            
-           record['wms'] = self._findWXS( md, "OGC:WMS" )
-           record['wfs'] = self._findWXS( md, "OGC:WFS" )
-           record['wcs'] = self._findWXS( md, "OGC:WCS" )
+           record['wms'] =  self._findWXS( md, "OGC:WMS" )
+           record['wfs'] =  self._findWXS( md, "OGC:WFS" )
+           record['wcs'] =  self._findWXS( md, "OGC:WCS" )
            record['wmts'] = self._findWXS( md , "OGC:WMTS")
            record['download'] = self._findDownloads( md )
            self.records.append(record)
@@ -52,7 +54,6 @@ class MDdata(object):
     def _findWXS(self , node, protocol= None ):
         links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                             if "protocol" in n.attrib and n.attrib["protocol"] == protocol] 
-
         if len(links) > 0: 
             name = links[0].attrib["name"] if "name" in links[0].attrib else links[0].text
             return (name, links[0].text)
@@ -74,18 +75,12 @@ class MDdata(object):
         atom = atoms[0]
 
         try:    
-            if self._proxy:
-                proxy = urllib.request.ProxyHandler({'http': self._proxy})
-                auth = urllib.request.HTTPBasicAuthHandler()
-                opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-                response =  opener.open(atom, timeout=self._timeout)
-            else:
-                response =  urllib.request.urlopen(atom, timeout=self._timeout)   
+            resp= getUrlData(atom)
         except:
             return []
         
         results = []
-        root = ET.parse(response).getroot()
+        root = ET.fromstring(resp)  #parse(response).getroot()  #
         entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
         for entry in entries:
             dl = entry.find( "{http://www.w3.org/2005/Atom}link")
@@ -101,18 +96,10 @@ class MDReader(object):
     :param proxyUrl: the proxy to use for internet calls
     :param timeout: the timeout for internet calls
     """
-    def __init__(self, proxyUrl=None, timeout=15 ):
-        self.timeout = timeout
+    def __init__(self):
         self.geoNetworkUrl =  CSW_URL
-
         self.dataTypes = [["Dataset", "dataset"],["Service","service"]]
         self.inspireServiceTypes = ["discovery","download","view","other"]
-        
-        self.opener = None
-        if proxyUrl:
-             proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-             auth = urllib.request.HTTPBasicAuthHandler()
-             self.opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
         
     def _createFindUrl(self, q="", start=1, maxRecords=100, orgName='', dataType='', inspiretheme='', inspireServiceType=''): 
         url = self.geoNetworkUrl 
@@ -151,7 +138,7 @@ class MDReader(object):
         data["startPosition"] = start
         data["constraint"] = CQL
                 
-        values = urllib.parse.urlencode(data)
+        values = urlencode(data)
 
         return url +"?"+ values
           
@@ -178,42 +165,22 @@ class MDReader(object):
         
         :return: a list with the Keywords
         """
-        url1 = self.geoNetworkUrl + "?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
-        try:
-            if self.opener: 
-                response1 = self.opener.open(url1, timeout=self.timeout)
-            else: 
-                response1 = urllib.request.urlopen(url1, timeout=self.timeout)
-        except  (urllib.error.HTTPError, urllib.error.URLError) as e:
-            raise metaError( str( e.reason ))
-        except:
-            raise metaError( str( sys.exc_info()[1] ))
-        else:
-            result1 = ET.parse(response1).getroot()
-            #result2 = ET.parse(response2).getroot()
-            r1 = [ n.text for n in result1.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            return r1 
+        url = self.geoNetworkUrl + "?request=GetDomain&service=CSW&version=2.0.2&PropertyName=Subject"
+        resp = getUrlData(url)
+        result = ET.fromstring(resp)  
+        return [ n.text for n in result.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
 
     def list_organisations(self):
         """List the organisations
         
         :return: a list with the organisations
         """
-        
         url = self.geoNetworkUrl + '?request=GetDomain&service=CSW&version=2.0.2&PropertyName=OrganisationName'
-
-        try:
-            if self.opener: response = self.opener.open(url, timeout=self.timeout)
-            else: response = urllib.request.urlopen(url, timeout=self.timeout)
-        except  (urllib.error.HTTPError, urllib.error.URLError) as e:
-            raise metaError( str( e.reason ))
-        except:
-            raise metaError( str( sys.exc_info()[1] ))
-        else:
-            result = ET.parse(response).getroot()
-            organisations = [ n.text for n in result.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
-            organisations.sort()
-            return organisations
+        resp = getUrlData(url)
+        result = ET.fromstring(resp)  
+        organisations = [ n.text for n in result.findall('.//{http://www.opengis.net/cat/csw/2.0.2}Value') ]
+        organisations.sort()
+        return organisations
 
     def search(self, q="", start=1, step=100, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
         """Search the csw with the following parameters:
@@ -227,13 +194,10 @@ class MDReader(object):
         :param inspireServiceType: filter on inspire serviceType
         :return: a XMLdocument with the results
         """
-
         url = self._createFindUrl( q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
-
-        if self.opener: response = self.opener.open(url, timeout=self.timeout)
-        else: response = urllib.request.urlopen(url, timeout=self.timeout)
-        result = ET.parse(response)
-        return result.getroot()
+        resp = getUrlData(url)
+        result = ET.fromstring(resp)  
+        return result
 
     def searchAll(self, q="", orgName='', dataType='', inspiretheme='', inspireServiceType=''):
         """Search the csw, making multiple calls in case of large resultsets, with the following parameters:
@@ -250,7 +214,8 @@ class MDReader(object):
         step= 100
         result = self.search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
         searchResult = result.find(".//{http://www.opengis.net/cat/csw/2.0.2}SearchResults")
-        if not searchResult: return
+        if not searchResult: 
+            return
         count = int( searchResult.attrib["numberOfRecordsMatched"] )
         start += step
         while (start) <= count:  
@@ -262,14 +227,8 @@ class MDReader(object):
         return searchResult
 
 
-class metaError(Exception):
-    """Exception, a error in metadataXML"""
-    def __init__(self, message):
-        self.message = message
-    def __str__(self):
-        return repr(self.message)
    
-def getWmsLayerNames( url, proxyUrl='', timeout=5):
+def getWmsLayerNames(url):
     """List all the thr layers in a WMS
     
     :param url: the getcapabilities url of the WMS
@@ -280,15 +239,8 @@ def getWmsLayerNames( url, proxyUrl='', timeout=5):
     """
     capability = url.split("?")[0] + "?request=GetCapabilities&version=1.3.0&service=wms"
     
-    if proxyUrl:
-        proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-        auth = urllib.request.HTTPBasicAuthHandler()
-        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWMS =  opener.open(capability, timeout=timeout)
-    else:
-        responseWMS =  urllib.request.urlopen(capability, timeout=timeout)
-    
-    result = ET.parse(responseWMS).getroot()
+    resp = getUrlData(capability)
+    result = ET.fromstring(resp)  
     layers =  result.findall( ".//{http://www.opengis.net/wms}Layer" )
     layerNames=[]
 
@@ -302,7 +254,7 @@ def getWmsLayerNames( url, proxyUrl='', timeout=5):
 
     return layerNames
 
-def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
+def getWFSLayerNames( url ):
     """List all the layers in a WFS
     
     :param url: the getcapabilities url of the WFS
@@ -312,15 +264,8 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
     :return: a list of tuples in de form: [(name, title, srs ), ...]
     """
     capability = url.split("?")[0] + "?request=GetCapabilities&version=2.0.0&service=wfs"
-    if proxyUrl:
-        proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-        auth = urllib.request.HTTPBasicAuthHandler()
-        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWFS =  opener.open(capability, timeout=timeout)
-    else:
-        responseWFS =  urllib.request.urlopen(capability, timeout=timeout)
-    
-    result = ET.parse(responseWFS).getroot()
+    resp = getUrlData(capability)
+    result = ET.fromstring(resp)  
     layerNames=[]
     
     #default
@@ -340,7 +285,7 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
             title = lyr.find("{http://www.opengis.net/wfs/2.0}Title")
             srs = lyr.find("{http://www.opengis.net/wfs/2.0}DefaultCRS")
             
-            isComplex = testComplex(url, name.text, version, proxyUrl, timeout )
+            isComplex = testComplex(url, name.text, version)
             
             if ( name != None) and ( title != None ):
                 if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
@@ -352,7 +297,7 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
             title = lyr.find("{http://www.opengis.net/wfs}Title")
             srs = lyr.find("{http://www.opengis.net/wfs}DefaultCRS")
                         
-            isComplex = testComplex(url, name.text, version, proxyUrl, timeout )
+            isComplex = testComplex(url, name.text, version)
             
             if ( name != None) and ( title != None ):
                 if srs == None: layerNames.append(( name.text, title.text, 'EPSG:28992'))
@@ -368,7 +313,7 @@ def getWFSLayerNames( url, proxyUrl='', timeout=5 ):
                 else: layerNames.append(( name.text, title.text, srs.text, False))
     return { 'version': version, 'layerNames': layerNames }
 
-def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
+def getWMTSlayersNames( url ):
     """List all the layers in a WMTS
     
     :param url: the getcapabilities url of the WCS
@@ -381,15 +326,9 @@ def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
         capability = url.split("?")[0] + "?service=WMTS&request=Getcapabilities&version="
     else: 
         capability = url
-    if proxyUrl:
-        proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-        auth = urllib.request.HTTPBasicAuthHandler()
-        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        responseWMTS =  opener.open(capability, timeout=timeout)
-    else:
-        responseWMTS =  urllib.request.urlopen(capability, timeout=timeout)
-        
-    result = ET.parse(responseWMTS).getroot()
+
+    resp = getUrlData(capability)
+    result = ET.fromstring(resp)  
     content = result.find( "{http://www.opengis.net/wmts/1.0}Contents" )
     layers =  content.findall( "{http://www.opengis.net/wmts/1.0}Layer" )
     layerNames = []
@@ -413,7 +352,7 @@ def getWMTSlayersNames( url, proxyUrl='', timeout=5 ):
 
     return layerNames
 
-def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1", timeout=5 ):
+def getWCSlayerNames( url, wcs_version="1.1"):
     """List all the layers in a WFS
     
     :param url: the getcapabilities url of the WCS
@@ -425,25 +364,15 @@ def getWCSlayerNames( url, proxyUrl='', wcs_version="1.1", timeout=5 ):
     """    
     capability = url.split("?")[0] + "?request=GetCapabilities&version=%s.0&service=WCS" % wcs_version
 
-    if proxyUrl:
-       proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-       auth = urllib.request.HTTPBasicAuthHandler()
-       opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-       responseWCS =  opener.open(capability, timeout=timeout)
-       #find namespaces to identify WCS-version returned
-       namespaces = dict([node for _, node in ET.iterparse( responseWCS, events=['start-ns'])])
-       responseWCS =  opener.open(capability, timeout=timeout)
-    else:
-       responseWCS =  urllib.request.urlopen(capability, timeout=timeout)
-       #find namespaces to identify WCS-version returned
-       namespaces = dict([node for _, node in ET.iterparse( responseWCS, events=['start-ns'])])
-       responseWCS =  urllib.request.urlopen(capability, timeout=timeout)
-    
+    resp = getUrlData(capability)
+    result = ET.fromstring(resp) 
+
+    #find namespaces to identify WCS-version returned
+    namespaces = dict([node for _, node in ET.iterparse( StringIO(result), events=['start-ns'])])
     wcs_version = namespaces[''][-3:]
     wcsNS = "http://www.opengis.net/wcs/" + wcs_version
     owsNS = "http://www.opengis.net/ows/" + wcs_version
 
-    result = ET.parse(responseWCS).getroot() 
     content = result.find( "{%s}Contents" % wcsNS)
     
     layers =  content.findall( "{%s}CoverageSummary" % wcsNS)
@@ -471,7 +400,7 @@ def makeWFSuri( url, name='', srsname="EPSG:28992", version='1.0.0' ):
                 'TYPENAME': name,
                 'SRSNAME': srsname }
     
-    uri = url.split("?")[0] + '?' + urllib.parse.unquote( urllib.parse.urlencode(params) )
+    uri = url.split("?")[0] + '?' + unquote( urlencode(params) )
     return uri
 
 def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', format='image/png' ):
@@ -494,7 +423,7 @@ def makeWMTSuri( url, layer, tileMatrixSet, srsname="EPSG:3857", styles='', form
                 'contextualWMSLegend': 0, 
                 'url': url.split('?')[0]  }
     
-    uri = urllib.parse.unquote( urllib.parse.urlencode(params)  )
+    uri = unquote( urlencode(params)  )
     return uri
 
 def makeWCSuri( url, layer ):  
@@ -509,10 +438,10 @@ def makeWCSuri( url, layer ):
                 'identifier': layer,
                 'url': url.split('?')[0]  } 
 
-    uri = urllib.parse.unquote( urllib.parse.urlencode(params)  )
+    uri = unquote( urlencode(params) )
     return uri 
       
-def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
+def testComplex(url, typeName, version="1.1.0" ):
     """Test if a WFS has complex features for a specific layer (typeName)
     
     :param url: the url of the WFS
@@ -523,10 +452,7 @@ def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
     
     :return: a boolean, true if the WFS has complex features
     """
-    #TODO this a very ugly way of  doing this, find a better way!
-    
     if version not in ["1.1.0", "2.0.0"]: return False
-    
     if version == "1.1.0": countStr = "maxFeatures"
     if version == "2.0.0": countStr = "count"
     
@@ -535,15 +461,8 @@ def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
     fullUrl = baseUrl + qryString
     
     try: 
-        if proxyUrl:
-            proxy = urllib.request.ProxyHandler({'http': proxyUrl})
-            auth = urllib.request.HTTPBasicAuthHandler()
-            opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-            response =  opener.open(fullUrl, timeout=timeout)
-        else:
-            response =  urllib.request.urlopen(fullUrl, timeout=timeout)
-    
-        geojson = json.load(response) 
+        response = getUrlData(fullUrl)
+        geojson = json.loads(response) 
         features = geojson['features']
         
         if len(features) > 0:
@@ -557,7 +476,7 @@ def testComplex(url, typeName, version="1.1.0", proxyUrl='', timeout=5 ):
         print("Error in finding out WFS-complex:" + str( sys.exc_info() ) )
         return False
     
-def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, version="1.1.0", bbox=[], proxyUrl='', timeout=5):
+def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, version="1.1.0", bbox=[]):
     """Download a WFS as GML-file for a specific area
     
     :param url: the url of the WFS
@@ -592,18 +511,10 @@ def downloadWFS(url, typeName, outputLocation, crs="EPSG:4326", maxCount=10000, 
     qryString = "?{}={}&SERVICE=WFS&VERSION={}&REQUEST=GetFeature&{}={}&srsName={}&bbox={}".format(
                                                 countStr, maxCount, version, typeNameStr, typeName, crs, bboxS) 
     fullUrl = baseUrl + qryString
-
-    if proxyUrl:
-        proxy =  urllib.request.ProxyHandler({'http': proxyUrl})
-        auth =   urllib.request.HTTPBasicAuthHandler()
-        opener = urllib.request.build_opener(proxy, auth, urllib.request.HTTPHandler)
-        response = opener.open(fullUrl, timeout=timeout)
-    else:
-        response = urllib.request.urlopen(fullUrl, timeout=timeout)
+    response = getUrlData(fullUrl, returnBytes=True)
         
-    with response, open(outputLocation, 'wb') as out_file:
-        data = response.read() 
-        out_file.write(data)
+    with open(outputLocation, 'wb') as out_file:
+        out_file.write(response)
 
     return outputLocation
     

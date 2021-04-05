@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-from qgis.core import QgsPoint, QgsCoordinateTransform, QgsCoordinateReferenceSystem, QgsGeometry, QgsRectangle, QgsField, QgsProject, QgsVectorLayer, QgsFeature, QgsVectorFileWriter, QgsPalLayerSettings
-from qgis.PyQt.QtCore import QVariant
-from qgis.PyQt.QtWidgets import QFileDialog
+from qgis.core import QgsPoint, QgsCoordinateTransform, QgsCoordinateReferenceSystem, QgsGeometry, QgsRectangle, QgsProject
 from qgis.PyQt.QtGui import QColor
 from qgis.gui import QgsVertexMarker
-from os.path import splitext
 
 class geometryHelper(object):
     """Several tools to modify geometry etc.

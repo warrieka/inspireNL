@@ -43,8 +43,8 @@ class inspireNL(object):
         self.toolbar = self.iface.addToolBar(u'inspireNL')
         self.toolbar.setObjectName(u'inspireNL')
 
-    # noinspection PyMethodMayBeStatic
-    def tr(self, message):
+    @staticmethod
+    def tr(message):
         """Get the translation for a string using Qt translation API.
 
         :param message: String for translation.
@@ -55,7 +55,7 @@ class inspireNL(object):
         "Get the translation for a string using Qt translation API."
         return QCoreApplication.translate('inspireNL', message)
 
-    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True,  add_to_toolbar=True, status_tip=None, parent=None):
+    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True, status_tip=None, parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -118,7 +118,7 @@ class inspireNL(object):
             parent=self.iface.mainWindow())
 
         self.add_action( ':/plugins/inspireNL/images/icon.png', add_to_toolbar=True, 
-            text=self.tr(u'Over INSPIRE NL'), callback=self.runAbout, 
+            text=self.tr(u'Instellen INSPIRE Nederland plugin  voor QGIS'), callback=self.runAbout, 
             parent=self.iface.mainWindow())
         
     def unload(self):
@@ -133,7 +133,6 @@ class inspireNL(object):
     def runAbout(self):
         'show the about dialog'
         self.aboutDlg.show()
-        # Run the dialog event loop
         self.aboutDlg.exec_()
    
     def runCatalog(self):

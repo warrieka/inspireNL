@@ -1,32 +1,34 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_inspireNL_dialog.ui'
+# Form implementation generated from reading ui file 'c:\work\prj\geonovum\inspireNL\ui_inspireNL_dialog.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_inspireNLdlg(object):
     def setupUi(self, inspireNLdlg):
         inspireNLdlg.setObjectName("inspireNLdlg")
-        inspireNLdlg.resize(654, 553)
+        inspireNLdlg.resize(636, 590)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/plugins/inspireNL/images/icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         inspireNLdlg.setWindowIcon(icon)
-        self.verticalLayout = QtWidgets.QVBoxLayout(inspireNLdlg)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(inspireNLdlg)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.textBrowser = QtWidgets.QTextBrowser(inspireNLdlg)
         self.textBrowser.setReadOnly(True)
         self.textBrowser.setOpenExternalLinks(True)
         self.textBrowser.setObjectName("textBrowser")
-        self.verticalLayout.addWidget(self.textBrowser)
+        self.verticalLayout_2.addWidget(self.textBrowser)
         self.button_box = QtWidgets.QDialogButtonBox(inspireNLdlg)
         self.button_box.setOrientation(QtCore.Qt.Horizontal)
         self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
         self.button_box.setObjectName("button_box")
-        self.verticalLayout.addWidget(self.button_box)
+        self.verticalLayout_2.addWidget(self.button_box)
 
         self.retranslateUi(inspireNLdlg)
         self.button_box.accepted.connect(inspireNLdlg.accept)
@@ -53,5 +55,4 @@ class Ui_inspireNLdlg(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Verdana,sans-serif\'; font-size:8pt; color:#000000; background-color:#ffffff;\"><br /></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;\"><span style=\" font-family:\'Verdana,sans-serif\'; font-size:8pt; color:#000000;\">Auteur: Kay Warrie (</span><a href=\"mailto:kaywarrie@gmail.com\"><span style=\" font-family:\'Verdana,sans-serif\'; font-size:8pt; text-decoration: underline; color:#1155cc;\">kaywarrie@</span></a><a href=\"http://kgis.be/\"><span style=\" font-family:\'Verdana,sans-serif\'; font-size:8pt; text-decoration: underline; color:#1155cc;\">kgis.be</span></a><span style=\" font-family:\'Verdana,sans-serif\'; font-size:8pt; color:#000000;\">)</span></p>\n"
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;\"><span style=\" font-family:\'Verdana,sans-serif\'; font-size:8pt; color:#000000;\">In opdracht van Geonovum</span></p></body></html>"))
-
 from . import resources_rc

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication,  QSortFilterProxyModel, QRegExp, QStringListModel
+from qgis.PyQt.QtCore import (Qt, QSettings, QTranslator, QCoreApplication, QUrl,
+                                 QSortFilterProxyModel, QRegExp, QStringListModel)
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
-from qgis.PyQt.QtWidgets import QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, QMessageBox, QFileDialog
+from qgis.PyQt.QtWidgets import (QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, 
+                                                                    QMessageBox, QFileDialog )
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsWkbTypes 
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsFileDownloader
 from qgis.gui import QgsMessageBar
 from . import geometryhelper as gh
-from .settings import settings
 from . import metadataParser as metadata
-from .metadataParser import MDReader, MDdata, getWmsLayerNames, getWFSLayerNames, makeWFSuri, getWMTSlayersNames, makeWMTSuri,  getWCSlayerNames, makeWCSuri
-import sys, os, webbrowser, json, urllib
+import sys, os, json
 
 class dataCatalog(QDialog):
     """The dialog for the catalog searchwindow
@@ -20,7 +20,6 @@ class dataCatalog(QDialog):
     def __init__(self, iface):
         QDialog.__init__(self, None)
         self.setWindowFlags( self.windowFlags() & ~Qt.WindowContextHelpButtonHint )
-        #self.setWindowFlags( self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.iface = iface
     
         # initialize locale
@@ -38,9 +37,9 @@ class dataCatalog(QDialog):
         self.ui = Ui_dataCatalogDlg()
         self.ui.setupUi(self)
         
-        #get settings
-        self.s = settings()
+        #get helpers and meta-parser
         self.gh = gh.geometryHelper( self.iface )
+        self.md = metadata.MDReader()
         
         #setup a message bar
         self.bar = QgsMessageBar() 
@@ -67,9 +66,7 @@ class dataCatalog(QDialog):
         self.completerModel = QStringListModel(self)
         self.ui.zoekTxt.setCompleter(self.completer )
         self.completer.setModel(self.completerModel )
-        
-        self.md = metadata.MDReader(timeout=self.s.timeout, proxyUrl=self.s.proxyUrl)
-  
+ 
         #eventhandlers 
         self.ui.zoekBtn.clicked.connect(self.onZoekClicked)
         self.ui.addWMSbtn.clicked.connect(self.addWMS)
@@ -80,6 +77,7 @@ class dataCatalog(QDialog):
         self.ui.resultView.clicked.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
         self.finished.connect(self.clean)
+
 
     def setModel(self, records): 
         """set the model of the seachresult with records (metadata.MDdata)"""
@@ -167,6 +165,7 @@ class dataCatalog(QDialog):
     def onZoekClicked(self):
         """Called when user clicked zoekBtn"""  
         self.zoek = self.ui.zoekTxt.currentText()
+        self.model.clear()
         self.search()  
       
     def modelFilterCbxIndexChanged(self):
@@ -205,21 +204,17 @@ class dataCatalog(QDialog):
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
             searchResult = metadata.MDdata( 
-                self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType),  proxyUrl=self.s.proxyUrl)
+                self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType) )
         else:
-            searchResult = metadata.MDdata( self.md.searchAll( self.zoek ), proxyUrl=self.s.proxyUrl )
+            searchResult = metadata.MDdata( self.md.searchAll( self.zoek ) )
         QApplication.restoreOverrideCursor()
-        
+
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
         self.setModel(searchResult.records)
         if searchResult.count == 0:
            self.bar.pushMessage( QCoreApplication.translate("datacatalog", "Waarschuwing "), 
              QCoreApplication.translate("datacatalog", "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
-
-    def openUrl(self, url):
-        """Open url in browserwindow """
-        if url: webbrowser.open_new_tab( url )
 
     def addWMS(self):
         """Add WMS from current record to map"""
@@ -229,7 +224,7 @@ class dataCatalog(QDialog):
         if crs != 'EPSG:28992' or  crs != 'EPSG:3857' or  crs != 'EPSG:3043':
            crs = 'EPSG:28992' 
         try:   
-          lyrs =  metadata.getWmsLayerNames( self.wms, self.s.proxyUrl ) 
+          lyrs =  metadata.getWmsLayerNames( self.wms ) 
         except:
           self.bar.pushMessage( "Error", str(sys.exc_info()[1]), level=Qgis.Critical , duration=10)
           return 
@@ -264,11 +259,11 @@ class dataCatalog(QDialog):
             self.bar.pushMessage("Error", str(sys.exc_info()[1] ), level=Qgis.Critical , duration=10)
             return 
       
-    def addWFS(self):    
+    def addWFS(self):
         """Add WFS from current record to map"""
         if self.wfs == None: return
 
-        wfsinfo = metadata.getWFSLayerNames( self.wfs, self.s.proxyUrl )
+        wfsinfo = metadata.getWFSLayerNames( self.wfs )
         lyrs =  wfsinfo['layerNames']
         wfsVersion = wfsinfo['version']
         
@@ -302,7 +297,6 @@ class dataCatalog(QDialog):
             wfsUri = metadata.makeWFSuri(url, layerName, crs, wfsVersion )
             vlayer = QgsVectorLayer( wfsUri, layerTitle , "WFS")            
             QgsProject.instance().addMapLayer(vlayer)
-
 
     def complexWFS(self):
        """Warning messagebox to be called when working WFS with complex features, 
@@ -356,7 +350,7 @@ class dataCatalog(QDialog):
         eMax = self.gh.prjPtFromMapCrs( [e.xMaximum(), e.yMaximum()], crsNum)
         
         bbox = [ eMin.x(), eMin.y(), eMax.x(), eMax.y() ]
-        metadata.downloadWFS(url, layerName, fileName, crs, 50000, wfsVersion, bbox, self.s.proxyUrl, 120)
+        metadata.downloadWFS(url, layerName, fileName, crs, 50000, wfsVersion, bbox)
         
         if metadata.xmlIsEmpty( fileName ):
             with open(fileName, 'r') as file:
@@ -373,12 +367,11 @@ class dataCatalog(QDialog):
         else:
             self.iface.addVectorLayer(fileName , layerName, "ogr")
              
-
     def addWMTS(self):
       """Add WMTS from current record to map"""
       if self.wmts == None: return
       try:
-          lyrs =  metadata.getWMTSlayersNames( self.wmts, self.s.proxyUrl )
+          lyrs =  metadata.getWMTSlayersNames( self.wmts )
       except:
           self.bar.pushMessage("Error",'Kan niet connecteren met '+ self.wmts, level=Qgis.Critical , duration=10)
           return 
@@ -410,7 +403,7 @@ class dataCatalog(QDialog):
   
     def addWCS(self):
       """Add WCS from current record to map"""
-      lyrs =  metadata.getWCSlayerNames( self.wcs, self.s.proxyUrl )
+      lyrs =  metadata.getWCSlayerNames( self.wcs )
          
       if len(lyrs) == 0:
           self.bar.pushMessage("WCS", 
@@ -453,19 +446,15 @@ class dataCatalog(QDialog):
                 return
             else:
                 dlName = [n[1] for n in self.dl if n[0] == layerTitle ][0]
-        
-        file_name, file_ext = os.path.splitext( os.path.basename( dlName ).split("?")[0] )
-        if file_ext == "": 
-            file_name = layerTitle + ".xml"
-            file_ext =  ".xml"
-        
-        flname = os.path.join( os.path.expanduser("~") , file_name )
-        
-        fileName, _ = QFileDialog.getSaveFileName(self,"Opslaan als", flname, "{0} (*{0});;All Files (*)".format(file_ext) )
-        if fileName:
-           urllib.request.urlretrieve(dlName, fileName)
 
-  
+        file_ext = os.path.splitext( os.path.basename(  dlName ).split("?")[0] )[0]
+        file_path  =  os.path.join( os.path.basename(  dlName ) , layerTitle )
+        
+        file_path, _ = QFileDialog.getSaveFileName(self,"Opslaan als", file_path, "{0} (*{0});;All Files (*)".format(file_ext) )
+
+        if file_path:
+            QgsFileDownloader( QUrl(dlName), file_path)
+
     def clean(self):
         """Reset the UI to initial positions"""
         self.model.clear()

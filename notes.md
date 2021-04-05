@@ -1,6 +1,27 @@
 Notas
 ====
 
+Update april 2021
+----------------
+
+Vraag: Er wordt opmerkt dat de plugin niet goed werkt achter een proxy. 
+
+Hier voorbeeld code zoals ik in een project de geocodeer service aanroep om daarmee uiteindelijk adressen van een locatie te voorzien:
+
+```python
+proxieLijst={
+            "http":"http://<server>:<poort>",
+            "https":"http://<server>:<poort>"
+}
+strUrl = "http://geodata.nationaalgeoregister.nl/locatieserver/v3/free"
+postdata = {
+    "fq": "type:adres",
+    "q": "postcode:3521BJ AND woonplaatsnaam:Utrecht AND straatnaam:Croeselaan AND huis_nlt:15",
+    "rows": 1
+}
+resp = requests.post(strUrl, proxies=proxieLijst, data=postdata)
+```
+
 WMTS QGIS uri's
 ----
 contextualWMSLegend=0

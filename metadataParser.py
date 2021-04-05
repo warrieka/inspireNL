@@ -1,15 +1,13 @@
 import json, sys, json
-from urllib.parse import urlencode, unquote
+from urllib.parse import urlencode, unquote, urlparse, parse_qsl
 import xml.etree.ElementTree as ET
 from io import StringIO
-from .webUtil import getUrlData
+from .webUtil import getUrlData, metaError
 
-CSW_URL = "http://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire"
+CSW_URL = "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire"
 
 
 class MDdata(object):
-    count = 0
-    records = []
     def __init__(self, metadataXML):
         """Parse a CSW-metadataXML 
     
@@ -17,6 +15,8 @@ class MDdata(object):
         """
         if not metadataXML: return
         self.count = int( metadataXML.attrib["numberOfRecordsMatched"] ) 
+        self.records = []
+        self.count = 0
         
         mds = metadataXML.findall("{http://www.opengis.net/cat/csw/2.0.2}Record")
         for md in mds:
@@ -47,23 +47,28 @@ class MDdata(object):
            record['wms'] =  self._findWXS( md, "OGC:WMS" )
            record['wfs'] =  self._findWXS( md, "OGC:WFS" )
            record['wcs'] =  self._findWXS( md, "OGC:WCS" )
-           record['wmts'] = self._findWXS( md , "OGC:WMTS")
+           record['wmts'] = self._findWXS( md, "OGC:WMTS")
            record['download'] = self._findDownloads( md )
            self.records.append(record)
            
-    def _findWXS(self , node, protocol= None ):
-        links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
+    def _findWXS(self, node, protocol= None ):
+        links =    [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                             if "protocol" in n.attrib and n.attrib["protocol"] == protocol] 
+        links +=   [ n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI")
+                     if n.text
+                     and 'SERVICE' in dict( parse_qsl( urlparse( n.text.upper() ).query ))  
+                     and dict(parse_qsl(urlparse( n.text.upper() ).query))['SERVICE'] in protocol ]   
+        
         if len(links) > 0: 
             name = links[0].attrib["name"] if "name" in links[0].attrib else links[0].text
             return (name, links[0].text)
         return ("","")
 
-    def _findDownloads(self , node):
+    def _findDownloads(self, node):
         links = [n for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
                                 if "protocol" in n.attrib and "DOWNLOAD" in n.attrib["protocol"].upper() ] 
         atoms = [n.text for n in node.findall("{http://purl.org/dc/elements/1.1/}URI") 
-                                if "protocol" in n.attrib and "atom" in n.attrib["protocol"].lower() ] 
+                                if "protocol" in n.attrib and "ATOM" in n.attrib["protocol"].upper() ] 
         
         if len(links) == 0 and len(atoms) == 0: 
             return []
@@ -76,11 +81,15 @@ class MDdata(object):
 
         try:    
             resp= getUrlData(atom)
-        except:
+            results = []
+            root = ET.fromstring(resp)
+        except ET.ParseError:
+            print( "WARNING: Geen correcte xml:  {} ".format(atom) )
+            return []
+        except metaError as me:
+            print( "WARNING: http-fout {} -> geeft {}".format(atom, me.message) )
             return []
         
-        results = []
-        root = ET.fromstring(resp)  #parse(response).getroot()  #
         entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
         for entry in entries:
             dl = entry.find( "{http://www.w3.org/2005/Atom}link")
@@ -182,7 +191,7 @@ class MDReader(object):
         organisations.sort()
         return organisations
 
-    def search(self, q="", start=1, step=100, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
+    def _search(self, q="", start=1, step=100, orgName='', dataType='', inspiretheme='',  inspireServiceType=''):
         """Search the csw with the following parameters:
         
         :param q: free text to seach for
@@ -209,23 +218,22 @@ class MDReader(object):
         :param inspireServiceType: filter on inspire serviceType
         :return: a composite XMLdocument with the results
         """
-        
         start= 1
         step= 100
-        result = self.search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
+        result = self._search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
         searchResult = result.find(".//{http://www.opengis.net/cat/csw/2.0.2}SearchResults")
         if not searchResult: 
             return
         count = int( searchResult.attrib["numberOfRecordsMatched"] )
         start += step
         while (start) <= count:  
-           result = self.search(q, start, step, orgName, dataType,inspiretheme, inspireServiceType)
+           result = self._search(q, start, step, orgName, dataType,inspiretheme, inspireServiceType)
            mds= result.findall(".//{http://www.opengis.net/cat/csw/2.0.2}Record")
            for md in mds: searchResult.append( md )
            start += step
-           
-        return searchResult
 
+        mdata = MDdata( searchResult )
+        return mdata
 
    
 def getWmsLayerNames(url):

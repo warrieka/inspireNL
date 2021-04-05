@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import (Qt, QSettings, QTranslator, QCoreApplication, QUrl,
+from qgis.PyQt.QtCore import (Qt, QCoreApplication, QUrl,
                                  QSortFilterProxyModel, QRegExp, QStringListModel)
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import (QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, 
@@ -21,15 +21,6 @@ class dataCatalog(QDialog):
         QDialog.__init__(self, None)
         self.setWindowFlags( self.windowFlags() & ~Qt.WindowContextHelpButtonHint )
         self.iface = iface
-    
-        # initialize locale
-        locale = QSettings().value("locale/userLocale", "nl")
-        locale = locale[0:2]
-        localePath = os.path.join(os.path.dirname(__file__), 'i18n', '{}.qm'.format(locale))
-        if os.path.exists(localePath):
-            self.translator = QTranslator()
-            self.translator.load(localePath)
-    
         self.initGui()
 
     def initGui(self):
@@ -58,7 +49,6 @@ class dataCatalog(QDialog):
         #datamodel
         self.model = QStandardItemModel(self)
         self.proxyModel = QSortFilterProxyModel(self)
-        self.proxyModel.setSourceModel(self.model)
         self.ui.resultView.setModel(self.proxyModel )
         
         #completer
@@ -101,6 +91,8 @@ class dataCatalog(QDialog):
             wcsName =  QStandardItem( rec['wcs'][0] )         #10
             wmtsName = QStandardItem( rec['wmts'][0] )        #11
             self.model.appendRow([title,wms,downloadLinks,id,abstract,wfs,wcs,wmts,wmsName,wfsName,wcsName,wmtsName])
+        
+        self.proxyModel.setSourceModel(self.model)
 
     #overwrite
     def show(self):
@@ -165,7 +157,6 @@ class dataCatalog(QDialog):
     def onZoekClicked(self):
         """Called when user clicked zoekBtn"""  
         self.zoek = self.ui.zoekTxt.currentText()
-        self.model.clear()
         self.search()  
       
     def modelFilterCbxIndexChanged(self):
@@ -203,18 +194,18 @@ class dataCatalog(QDialog):
             else: dataType=''
             inspiretheme= self.ui.INSPIREthemaCbx.currentText()
             inspireServiceType= self.ui.INSPIREserviceCbx.currentText()
-            searchResult = metadata.MDdata( 
-                self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType) )
+            searchResult = self.md.searchAll( self.zoek, orgName, dataType, inspiretheme, inspireServiceType)
         else:
-            searchResult = metadata.MDdata( self.md.searchAll( self.zoek ) )
+            searchResult = self.md.searchAll( self.zoek ) 
         QApplication.restoreOverrideCursor()
-
+        
         self.ui.countLbl.setText( "Aantal gevonden: %s" % searchResult.count  )
         self.ui.descriptionText.setText('')
         self.setModel(searchResult.records)
         if searchResult.count == 0:
            self.bar.pushMessage( QCoreApplication.translate("datacatalog", "Waarschuwing "), 
-             QCoreApplication.translate("datacatalog", "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
+                QCoreApplication.translate("datacatalog", 
+                    "Er zijn geen resultaten gevonden voor deze zoekopdracht"), duration=10)
 
     def addWMS(self):
         """Add WMS from current record to map"""

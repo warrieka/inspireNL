@@ -12,7 +12,6 @@ def getUrlData(url, data=None, returnBytes=False):
     :return: the response as a string
     """
     bnr = QgsBlockingNetworkRequest()
-    print(url)
     if not data:
         respcode = bnr.get(QNetworkRequest( QUrl(url) ) )
     else:

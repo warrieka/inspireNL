@@ -36,7 +36,8 @@ PLUGINNAME=inspireNL
 
 PY_FILES = \
 	__init__.py settings.py webUtil.py \
-	inspireNL.py inspireNLabout.py dataCatalog.py geometryhelper.py metadataParser.py
+	inspireNL.py inspireNLabout.py dataCatalog.py geometryhelper.py \
+	metadataParser.py metadoc.py
 
 UI_FILES = ui_inspireNL_dialog.py ui_dataCatalog_dialog.py
 
@@ -60,7 +61,7 @@ run: deploy
 	${QGISPATH} --profiles-path $(PROFILEPATH) --profile ${PROFILENAME}
 
 deploy: derase compile
-	mkdir   $(PROFILE)\\python\plugins\$(PLUGINNAME)
+	mkdir   $(PROFILE)\python\plugins\$(PLUGINNAME)
 	cp -vfr $(PY_FILES) $(PROFILE)\python\plugins\$(PLUGINNAME)
 	cp -vf  $(UI_FILES) $(PROFILE)\python\plugins\$(PLUGINNAME)
 	cp -vf  $(RESOURCE_FILES) $(PROFILE)\python\plugins\$(PLUGINNAME)

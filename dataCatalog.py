@@ -9,6 +9,7 @@ from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsFileD
 from qgis.gui import QgsMessageBar
 from . import geometryhelper as gh
 from . import metadataParser as metadata
+from .metadoc import MDRecord
 import sys, os, json
 
 class dataCatalog(QDialog):
@@ -139,20 +140,35 @@ class dataCatalog(QDialog):
              <a href='http://www.nationaalgeoregister.nl/geonetwork/srv/search/?uuid=%s'>
              Bekijk in Nationaal Georegister</a>""" %  (title , abstract, uuid ))
            
-           if self.wms: self.ui.addWMSbtn.setEnabled(1)
-           else: self.ui.addWMSbtn.setEnabled(0)
+           _rec = MDRecord(uuid)
+           self.ui.addWMSbtn.setEnabled(1)
+           self.ui.addWFSbtn.setEnabled(1)
+           self.ui.addWMTSbtn.setEnabled(1)
+           self.ui.addWCSbtn.setEnabled(1)
+           self.ui.DLbtn.setEnabled(1)
+
+           if not self.wms and len( _rec.wms ) <0:
+                self.wms = _rec.wms[0]
+           elif not self.wms and len( _rec.wms ) ==0:
+                self.ui.addWMSbtn.setEnabled(0)
            
-           if self.wfs: self.ui.addWFSbtn.setEnabled(1)
-           else: self.ui.addWFSbtn.setEnabled(0)
-                      
-           if self.wmts: self.ui.addWMTSbtn.setEnabled(1)
-           else: self.ui.addWMTSbtn.setEnabled(0)
+           if not self.wfs and len( _rec.wfs ) <0:
+                self.wfs = _rec.wfs[0]
+           elif not self.wfs and len( _rec.wfs ) ==0:
+                self.ui.addWFSbtn.setEnabled(0)
            
-           if self.wcs: self.ui.addWCSbtn.setEnabled(1)
-           else: self.ui.addWCSbtn.setEnabled(0)
-           
-           if self.dl: self.ui.DLbtn.setEnabled(1)
-           else: self.ui.DLbtn.setEnabled(0)
+           if not self.wmts and len( _rec.wmts ) <0:
+                self.wmts = _rec.wmts[0]
+           elif not self.wmts and len( _rec.wmts ) ==0:
+                self.ui.addWMTSbtn.setEnabled(0)
+
+           if not self.wcs and len( _rec.wcs ) <0:
+                self.wcs = _rec.wcs[0]
+           elif not self.wcs and len( _rec.wcs ) ==0:
+                self.ui.addWCSbtn.setEnabled(0)
+
+           if not self.dl:
+                self.ui.DLbtn.setEnabled(0)
         
     def onZoekClicked(self):
         """Called when user clicked zoekBtn"""  

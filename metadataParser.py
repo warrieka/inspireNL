@@ -13,10 +13,8 @@ class MDdata(object):
     
         :param metadataXML: a CSW-metadata XMLdocument
         """
-        if not metadataXML: return
-        self.count = int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         self.records = []
-        self.count = 0
+        self.count = int( metadataXML.attrib["numberOfRecordsMatched"] ) 
         
         mds = metadataXML.findall("{http://www.opengis.net/cat/csw/2.0.2}Record")
         for md in mds:
@@ -123,7 +121,7 @@ class MDReader(object):
         CQLparts = []
         
         if inspiretheme: 
-            CQLparts.append("(Subject LIKE '%"+ inspiretheme +"%' AND AnyText = 'GEMET - INSPIRE themes, version 1.0')")
+            CQLparts.append("(AnyText LIKE '%"+ inspiretheme +"%' AND AnyText = 'GEMET - INSPIRE themes, version 1.0')")
         if len(q.strip()) > 0: 
             CQLparts.append(" AnyText LIKE '%" + q + "%' ")
         if orgName: 
@@ -148,8 +146,8 @@ class MDReader(object):
         data["constraint"] = CQL
                 
         values = urlencode(data)
-
-        return url +"?"+ values
+        resultUrl = url +"?"+ values
+        return resultUrl
           
     def list_inspire_theme(self):
         """List the inspire-themes
@@ -221,9 +219,8 @@ class MDReader(object):
         start= 1
         step= 100
         result = self._search(q, start, step, orgName, dataType, inspiretheme, inspireServiceType)
-        searchResult = result.find(".//{http://www.opengis.net/cat/csw/2.0.2}SearchResults")
-        if not searchResult: 
-            return
+        searchResult = result.find("{http://www.opengis.net/cat/csw/2.0.2}SearchResults")
+
         count = int( searchResult.attrib["numberOfRecordsMatched"] )
         start += step
         while (start) <= count:  
@@ -377,6 +374,7 @@ def getWCSlayerNames( url, wcs_version="1.1"):
 
     #find namespaces to identify WCS-version returned
     namespaces = dict([node for _, node in ET.iterparse( StringIO(result), events=['start-ns'])])
+    print(namespaces)
     wcs_version = namespaces[''][-3:]
     wcsNS = "http://www.opengis.net/wcs/" + wcs_version
     owsNS = "http://www.opengis.net/ows/" + wcs_version

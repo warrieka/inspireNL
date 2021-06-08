@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
 
-    <title>Modules and Classes &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <title>Modules and Classes &#8212; The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="Changelog.html" title="Changelog"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Modules and Classes</a></li> 
       </ul>
     </div>  
@@ -684,6 +684,49 @@ added to self.actions list. (QAction)</p>
 </dd></dl>
 
 </section>
+<section id="module-inspireNL.metadoc">
+<span id="metadoc-module"></span><h2>metadoc module<a class="headerlink" href="#module-inspireNL.metadoc" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="inspireNL.metadoc.MDRecord">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">inspireNL.metadoc.</span></code><code class="sig-name descname"><span class="pre">MDRecord</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uuid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/inspireNL/metadoc.html#MDRecord"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#inspireNL.metadoc.MDRecord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Find and Interact with CSW-service metadata record.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uuid</strong> – the unique id of the record.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="inspireNL.metadoc.MDRecord.findService">
+<code class="sig-name descname"><span class="pre">findService</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">srvType</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WMS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/inspireNL/metadoc.html#MDRecord.findService"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#inspireNL.metadoc.MDRecord.findService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the urls of a service of a certain srvType.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>srvType</strong> – the type of service: wmts, wms, wfs, atom</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a array of url’s</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="inspireNL.metadoc.MDRecord.getmetadataXML">
+<code class="sig-name descname"><span class="pre">getmetadataXML</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/inspireNL/metadoc.html#MDRecord.getmetadataXML"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#inspireNL.metadoc.MDRecord.getmetadataXML" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a metadataRecord from URL</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>URL</strong> – the URL to metadata record.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a etree xml-object</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 <section id="module-inspireNL.settings">
 <span id="settings-module"></span><span id="settings"></span><h2>settings module<a class="headerlink" href="#module-inspireNL.settings" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
@@ -751,6 +794,7 @@ if <em>data</em> is given a “post” is performed.</p>
 <li><a class="reference internal" href="#module-inspireNL.inspireNL">inspireNL module</a></li>
 <li><a class="reference internal" href="#module-inspireNL.inspireNLabout">inspireNLabout module</a></li>
 <li><a class="reference internal" href="#module-inspireNL.metadataParser">metadataParser module</a></li>
+<li><a class="reference internal" href="#module-inspireNL.metadoc">metadoc module</a></li>
 <li><a class="reference internal" href="#module-inspireNL.settings">settings module</a></li>
 <li><a class="reference internal" href="#module-inspireNL.webUtil">webUtil module</a></li>
 </ul>
@@ -793,7 +837,7 @@ if <em>data</em> is given a “post” is performed.</p>
         <li class="right" >
           <a href="Changelog.html" title="Changelog"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Modules and Classes</a></li> 
       </ul>
     </div>

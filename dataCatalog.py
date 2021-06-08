@@ -137,7 +137,7 @@ class dataCatalog(QDialog):
            
            self.ui.descriptionText.setText(
              """<h3>%s</h3><div>%s</div><br/><br/>
-             <a href='http://www.nationaalgeoregister.nl/geonetwork/srv/search/?uuid=%s'>
+             <a href='https://nationaalgeoregister.nl/geonetwork/srv/dut/catalog.search#/metadata/%s'>
              Bekijk in Nationaal Georegister</a>""" %  (title , abstract, uuid ))
            
            _rec = MDRecord(uuid)

@@ -74,8 +74,8 @@ derase:
 zip: deploy 
 	# The zip target deploys the plugin and creates a zip file with the deployed
 	# content. You can then upload the zip file on http://plugins.qgis.org
-	rm -f $(PLUGINNAME).zip
-	cd $(PROFILE)\python\plugins; zip -9r $(CURDIR)\$(PLUGINNAME).zip $(PLUGINNAME)
+	rm -f build\$(PLUGINNAME).zip
+	cd $(PROFILE)\python\plugins; zip -9r $(CURDIR)\build\$(PLUGINNAME).zip $(PLUGINNAME)
 
 package: compile
 	# Create a zip package of the plugin named $(PLUGINNAME).zip.
@@ -83,7 +83,7 @@ package: compile
 	# git repository).
 	# To use, pass a valid commit or tag as follows:
 	#   make package VERSION=Version_0.3.2
-	rm -f $(PLUGINNAME).zip
+	rm -f build/$(PLUGINNAME).zip
 	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip $(VERSION)
 	echo "Created package: $(PLUGINNAME).zip"
 

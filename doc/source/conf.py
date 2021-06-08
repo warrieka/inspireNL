@@ -25,7 +25,7 @@ author = u'Kay Warrie'
 # The short X.Y version
 version = u'2.5'
 # The full version, including alpha/beta/rc tags
-release = u'Version 2.7 for QGIS 3'
+release = u'Version 2.8 for QGIS 3'
 
 
 # -- General configuration ---------------------------------------------------

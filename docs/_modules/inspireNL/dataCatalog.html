@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>inspireNL.dataCatalog &#8212; The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</title>
+    <title>inspireNL.dataCatalog &#8212; The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
     
@@ -28,7 +28,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">inspireNL.dataCatalog</a></li> 
       </ul>
@@ -51,6 +51,7 @@
 <span class="kn">from</span> <span class="nn">qgis.gui</span> <span class="kn">import</span> <span class="n">QgsMessageBar</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">geometryhelper</span> <span class="k">as</span> <span class="n">gh</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">metadataParser</span> <span class="k">as</span> <span class="n">metadata</span>
+<span class="kn">from</span> <span class="nn">.metadoc</span> <span class="kn">import</span> <span class="n">MDRecord</span>
 <span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">json</span>
 
 <div class="viewcode-block" id="dataCatalog"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog">[docs]</a><span class="k">class</span> <span class="nc">dataCatalog</span><span class="p">(</span><span class="n">QDialog</span><span class="p">):</span>
@@ -181,20 +182,35 @@
 <span class="sd">             &lt;a href=&#39;http://www.nationaalgeoregister.nl/geonetwork/srv/search/?uuid=%s&#39;&gt;</span>
 <span class="sd">             Bekijk in Nationaal Georegister&lt;/a&gt;&quot;&quot;&quot;</span> <span class="o">%</span>  <span class="p">(</span><span class="n">title</span> <span class="p">,</span> <span class="n">abstract</span><span class="p">,</span> <span class="n">uuid</span> <span class="p">))</span>
            
-           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           <span class="n">_rec</span> <span class="o">=</span> <span class="n">MDRecord</span><span class="p">(</span><span class="n">uuid</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+           <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wms</span> <span class="p">)</span> <span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="o">=</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+           <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wms</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wms</span> <span class="p">)</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
            
-           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                      
-           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wfs</span> <span class="p">)</span> <span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="o">=</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wfs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+           <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wfs</span> <span class="p">)</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWFSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
            
-           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-           
-           <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-           <span class="k">else</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+           <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wmts</span> <span class="p">)</span> <span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="o">=</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wmts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+           <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wmts</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wmts</span> <span class="p">)</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWMTSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+           <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wcs</span> <span class="p">)</span> <span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="o">=</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+           <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">wcs</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span> <span class="n">_rec</span><span class="o">.</span><span class="n">wcs</span> <span class="p">)</span> <span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addWCSbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+           <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dl</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">DLbtn</span><span class="o">.</span><span class="n">setEnabled</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
         
 <div class="viewcode-block" id="dataCatalog.onZoekClicked"><a class="viewcode-back" href="../../Modules%20and%20Classes.html#inspireNL.dataCatalog.dataCatalog.onZoekClicked">[docs]</a>    <span class="k">def</span> <span class="nf">onZoekClicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Called when user clicked zoekBtn&quot;&quot;&quot;</span>  
@@ -542,7 +558,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.7 for QGIS 3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">The Dutch INSPIRE QGIS plugin Version 2.8 for QGIS 3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">inspireNL.dataCatalog</a></li> 
       </ul>

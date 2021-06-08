@@ -6,7 +6,7 @@ qgisMinimumVersion=3.0
 description= EN: A tool to query INSPIRE datasets of the Dutch national dataportal "National Georegistry (NGR)" and add it to QGIS. 
     NL: Een tool om de INSPIRE datasets uit het Nationaal Georegister te bevragen en toe te voegen aan QGIS.
 
-version=2.9
+version=2.8
 author=Kay Warrie
 email=kaywarrie@gmail.com
 

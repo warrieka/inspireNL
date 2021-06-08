@@ -1,7 +1,9 @@
 Changelog
 =========
 
-
+Version 2.8
+-----------
+- Added a new class to read metadata records in xml. 
 
 Version 2.7
 -----------

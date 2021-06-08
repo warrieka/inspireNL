@@ -53,6 +53,13 @@ metadataParser module
     :undoc-members:
     :show-inheritance:
 
+metadoc module
+-------------------------------
+
+.. automodule:: inspireNL.metadoc
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 .. _settings:
 

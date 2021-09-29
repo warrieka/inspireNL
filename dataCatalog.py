@@ -5,12 +5,14 @@ from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import (QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, 
                                                                     QMessageBox, QFileDialog )
 from .ui_dataCatalog_dialog import Ui_dataCatalogDlg
-from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis, QgsFileDownloader
+from qgis.core import QgsProject, QgsVectorLayer, QgsRasterLayer, Qgis
 from qgis.gui import QgsMessageBar
 from . import geometryhelper as gh
 from . import metadataParser as metadata
 from .metadoc import MDRecord
+from .webUtil import getUrlData
 import sys, os, json
+
 
 class dataCatalog(QDialog):
     """The dialog for the catalog searchwindow
@@ -52,6 +54,10 @@ class dataCatalog(QDialog):
         self.proxyModel = QSortFilterProxyModel(self)
         self.ui.resultView.setModel(self.proxyModel )
         
+        #HIDDEN
+        self.ui.INSPIREserviceLbl.setVisible(False)
+        self.ui.INSPIREserviceCbx.setVisible(False)
+
         #completer
         self.completer = QCompleter( self )
         self.completerModel = QStringListModel(self)
@@ -65,7 +71,7 @@ class dataCatalog(QDialog):
         self.ui.addWMTSbtn.clicked.connect(self.addWMTS)
         self.ui.addWCSbtn.clicked.connect(self.addWCS)
         self.ui.DLbtn.clicked.connect(self.dlClicked)
-        self.ui.resultView.clicked.connect(self.resultViewClicked)
+        self.ui.resultView.selectionModel().selectionChanged.connect(self.resultViewClicked)
         self.ui.modelFilterCbx.currentIndexChanged.connect(self.modelFilterCbxIndexChanged)
         self.finished.connect(self.clean)
 
@@ -147,28 +153,30 @@ class dataCatalog(QDialog):
            self.ui.addWCSbtn.setEnabled(1)
            self.ui.DLbtn.setEnabled(1)
 
-           if not self.wms and len( _rec.wms ) <0:
+           if not self.wms and len( _rec.wms ) >0:
                 self.wms = _rec.wms[0]
            elif not self.wms and len( _rec.wms ) ==0:
                 self.ui.addWMSbtn.setEnabled(0)
            
-           if not self.wfs and len( _rec.wfs ) <0:
+           if not self.wfs and len( _rec.wfs ) >0:
                 self.wfs = _rec.wfs[0]
            elif not self.wfs and len( _rec.wfs ) ==0:
                 self.ui.addWFSbtn.setEnabled(0)
            
-           if not self.wmts and len( _rec.wmts ) <0:
+           if not self.wmts and len( _rec.wmts ) >0:
                 self.wmts = _rec.wmts[0]
            elif not self.wmts and len( _rec.wmts ) ==0:
                 self.ui.addWMTSbtn.setEnabled(0)
 
-           if not self.wcs and len( _rec.wcs ) <0:
+           if not self.wcs and len( _rec.wcs ) >0:
                 self.wcs = _rec.wcs[0]
            elif not self.wcs and len( _rec.wcs ) ==0:
                 self.ui.addWCSbtn.setEnabled(0)
 
-           if not self.dl:
-                self.ui.DLbtn.setEnabled(0)
+           if len( _rec.dl ) >0:
+               self.dl = _rec.dl
+           else:
+               self.ui.DLbtn.setEnabled(0)
         
     def onZoekClicked(self):
         """Called when user clicked zoekBtn"""  
@@ -454,15 +462,21 @@ class dataCatalog(QDialog):
             else:
                 dlName = [n[1] for n in self.dl if n[0] == layerTitle ][0]
 
-        file_ext = os.path.splitext( os.path.basename(  dlName ).split("?")[0] )[0]
-        file_path  =  os.path.join( os.path.basename(  dlName ) , layerTitle )
+        file_path =  os.path.join( os.path.expanduser('~/Documents') , os.path.basename(  dlName ) )
+        _, p_ext = os.path.splitext(file_path) 
+        p_ext = p_ext if p_ext else 'xml'
         
-        file_path, _ = QFileDialog.getSaveFileName(self,"Opslaan als", file_path, "{0} (*{0});;All Files (*)".format(file_ext) )
+        file_path , _ = QFileDialog.getSaveFileName(self, "Opslaan als", file_path, 
+            "Output bestand (*.{0});;All Files (*.*)".format(p_ext) )
 
-        if file_path:
-            QgsFileDownloader( QUrl(dlName), file_path)
+        print(file_path, _, dlName)
+        if not file_path == '':
+            _resp = getUrlData( dlName, returnBytes=True )
+            with  open( file_path , 'wb') as fl:
+                fl.write( _resp )
+            self.bar.pushMessage("Donwload voltooit", file_path, duration=10)
 
-    def clean(self):
+    def clean(self): 
         """Reset the UI to initial positions"""
         self.model.clear()
         self.wms = None

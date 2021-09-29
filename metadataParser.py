@@ -127,9 +127,9 @@ class MDReader(object):
         if orgName: 
             CQLparts.append(" OrganisationName = '" + orgName + "' ")
         if dataType: 
-            CQLparts.append(" type = '" + dataType + "' ")
+            CQLparts.append(" type='" + dataType + "' ")
         if inspireServiceType: 
-            CQLparts.append(" ServiceType = '" + inspireServiceType + "' ")
+            CQLparts.append(" ServiceType='" + inspireServiceType + "' ")
 
         CQL = "(" + " AND ".join(CQLparts) + ")"
 

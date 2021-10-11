@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from qgis.PyQt.QtCore import (Qt, QCoreApplication, QUrl,
+from qgis.PyQt.QtCore import (Qt, QCoreApplication, 
                                  QSortFilterProxyModel, QRegExp, QStringListModel)
 from qgis.PyQt.QtGui import QCursor, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtWidgets import (QApplication, QDialog, QSizePolicy, QCompleter, QInputDialog, 
@@ -450,7 +449,7 @@ class dataCatalog(QDialog):
         """Called when user clicked downloadBtn, initiate download of current record"""
         if not self.dl or len(self.dl) == 0: 
             return
-        
+            
         if len(self.dl) == 1:
             layerTitle = self.dl[0][0] 
             dlName =  self.dl[0][1] 
@@ -467,14 +466,14 @@ class dataCatalog(QDialog):
         p_ext = p_ext if p_ext else 'xml'
         
         file_path , _ = QFileDialog.getSaveFileName(self, "Opslaan als", file_path, 
-            "Output bestand (*.{0});;All Files (*.*)".format(p_ext) )
+            "All Files (*.*);;Output bestand (*.{0})".format(p_ext) )
 
-        print(file_path, _, dlName)
+        #print(file_path, _, dlName)
         if not file_path == '':
             _resp = getUrlData( dlName, returnBytes=True )
             with  open( file_path , 'wb') as fl:
                 fl.write( _resp )
-            self.bar.pushMessage("Donwload voltooit", file_path, duration=10)
+            self.bar.pushMessage("Donwload opgeslagen: ", file_path, duration=10)
 
     def clean(self): 
         """Reset the UI to initial positions"""

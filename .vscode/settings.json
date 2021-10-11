@@ -2,6 +2,9 @@
     "python.pythonPath": "C:\\Users\\kaywa\\.conda\\envs\\qgis\\python.exe",
     "python.envFile": "${workspaceFolder}/.env",
     "restructuredtext.confPath": "${workspaceFolder}\\doc\\source",
-    "python.analysis.extraPaths": [  "C:\\ProgramData\\Miniconda3", 
-        "C:\\Users\\kaywa\\.conda\\pkgs\\qgis-3.18.1-py39h0205a60_1\\Library\\python"]
+    "python.autoComplete.extraPaths": [
+        "C:\\Users\\kaywa\\.conda\\envs\\qgis\\Library\\python", "C:\\OSGeo4W\\apps\\qgis\\python"
+    ],
+    "python.analysis.extraPaths": [  "C:\\Users\\kaywa\\.conda\\envs\\qgis\\Library\\python", 
+        "C:\\OSGeo4W\\apps\\qgis\\python"]
 }

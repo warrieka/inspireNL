@@ -1,7 +1,7 @@
-import json, sys, json
+import sys, json
+from io import StringIO
 from urllib.parse import urlencode, unquote, urlparse, parse_qsl
 import xml.etree.ElementTree as ET
-from io import StringIO
 from .webUtil import getUrlData, metaError
 
 CSW_URL = "https://www.nationaalgeoregister.nl/geonetwork/srv/dut/inspire"
@@ -47,6 +47,7 @@ class MDdata(object):
            record['wcs'] =  self._findWXS( md, "OGC:WCS" )
            record['wmts'] = self._findWXS( md, "OGC:WMTS")
            record['download'] = self._findDownloads( md )
+           print( record['download'] )
            self.records.append(record)
            
     def _findWXS(self, node, protocol= None ):
@@ -74,9 +75,10 @@ class MDdata(object):
         if len(links) > 0 and len(atoms) == 0: 
             results = [ [ n.attrib["name"] if "name" in n.attrib else n.text , n.text ] for n in links ]
             return results
-    
-        atom = atoms[0]
 
+        return self._getAtom(atoms[0])
+
+    def _getAtom(self, atom):
         try:    
             resp= getUrlData(atom)
             results = []
@@ -87,13 +89,22 @@ class MDdata(object):
         except metaError as me:
             print( "WARNING: http-fout {} -> geeft {}".format(atom, me.message) )
             return []
-        
+
         entries =  root.findall( ".//{http://www.w3.org/2005/Atom}entry" )
         for entry in entries:
-            dl = entry.find( "{http://www.w3.org/2005/Atom}link")
+            dls = [ link for link in entry.findall( "{http://www.w3.org/2005/Atom}link") 
+                    if not ( "rel" in link.attrib and link.attrib["rel"] == "describedby") ]
+
+            if len(dls) == 0: continue
             titleNode = entry.find( "{http://www.w3.org/2005/Atom}title")
-            if dl is not None and titleNode is not None and "href" in dl.attrib: 
+            dl = dls[0]
+
+            if "type" in dl.attrib and "application/atom" in dl.attrib["type"]: 
+               results += self._getAtom( dl.attrib["href"] ) 
+               
+            else: 
                results.append( [ titleNode.text, dl.attrib["href"] ] )  
+
         return results
 
 
@@ -374,7 +385,6 @@ def getWCSlayerNames( url, wcs_version="1.1"):
 
     #find namespaces to identify WCS-version returned
     namespaces = dict([node for _, node in ET.iterparse( StringIO(result), events=['start-ns'])])
-    print(namespaces)
     wcs_version = namespaces[''][-3:]
     wcsNS = "http://www.opengis.net/wcs/" + wcs_version
     owsNS = "http://www.opengis.net/ows/" + wcs_version

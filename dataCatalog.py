@@ -145,37 +145,44 @@ class dataCatalog(QDialog):
              <a href='https://nationaalgeoregister.nl/geonetwork/srv/dut/catalog.search#/metadata/%s'>
              Bekijk in Nationaal Georegister</a>""" %  (title , abstract, uuid ))
            
-           _rec = MDRecord(uuid)
-           self.ui.addWMSbtn.setEnabled(1)
-           self.ui.addWFSbtn.setEnabled(1)
-           self.ui.addWMTSbtn.setEnabled(1)
-           self.ui.addWCSbtn.setEnabled(1)
-           self.ui.DLbtn.setEnabled(1)
+           self.ui.addWMSbtn.setEnabled(0)
+           self.ui.addWFSbtn.setEnabled(0)
+           self.ui.addWMTSbtn.setEnabled(0)
+           self.ui.addWCSbtn.setEnabled(0)
+           self.ui.DLbtn.setEnabled(0)
 
-           if not self.wms and len( _rec.wms ) >0:
-                self.wms = _rec.wms[0]
-           elif not self.wms and len( _rec.wms ) ==0:
-                self.ui.addWMSbtn.setEnabled(0)
+           if not self.dl:
+              md_rec = MDRecord(uuid)
+
+              if not self.wms and len( md_rec.wms ) >0:
+                 self.wms = md_rec.wms[0]
            
-           if not self.wfs and len( _rec.wfs ) >0:
-                self.wfs = _rec.wfs[0]
-           elif not self.wfs and len( _rec.wfs ) ==0:
-                self.ui.addWFSbtn.setEnabled(0)
+              if not self.wfs and len( md_rec.wfs ) >0:
+                 self.wfs = md_rec.wfs[0]      
            
-           if not self.wmts and len( _rec.wmts ) >0:
-                self.wmts = _rec.wmts[0]
-           elif not self.wmts and len( _rec.wmts ) ==0:
-                self.ui.addWMTSbtn.setEnabled(0)
+              if not self.wmts and len( md_rec.wmts ) >0:
+                 self.wmts = md_rec.wmts[0]
 
-           if not self.wcs and len( _rec.wcs ) >0:
-                self.wcs = _rec.wcs[0]
-           elif not self.wcs and len( _rec.wcs ) ==0:
-                self.ui.addWCSbtn.setEnabled(0)
+              if not self.wcs and len( md_rec.wcs ) >0:
+                 self.wcs = md_rec.wcs[0]   
 
-           if len( _rec.dl ) >0:
-               self.dl = _rec.dl
-           else:
-               self.ui.DLbtn.setEnabled(0)
+              if len( md_rec.dl ) >0:
+                  self.dl = md_rec.dl
+
+           if self.wms:
+                self.ui.addWMSbtn.setEnabled(1)
+
+           if self.wfs:
+                self.ui.addWFSbtn.setEnabled(1)
+
+           if self.wmts:
+                self.ui.addWMTSbtn.setEnabled(1)
+
+           if self.wcs:
+                self.ui.addWCSbtn.setEnabled(1)
+
+           if len(self.dl) >0:
+               self.ui.DLbtn.setEnabled(1)
         
     def onZoekClicked(self):
         """Called when user clicked zoekBtn"""  

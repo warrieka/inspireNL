@@ -2,7 +2,7 @@ docs/*.pdf
 docs/*.docx
 docs/*.doc
 
-ui_*py
+ui_*.py
 
 
 ###############
@@ -219,3 +219,5 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+symbology-style.db
+user-history.db

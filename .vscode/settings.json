@@ -7,5 +7,7 @@
     ],
     "python.analysis.extraPaths": [  
         "C:\\Users\\kaywa\\.conda\\envs\\qgis\\Library\\python", 
-        "C:\\OSGeo4W\\apps\\qgis\\python"]
+        "C:\\OSGeo4W\\apps\\qgis\\python"
+    ],
+    "qtForPython.designer.path": "C:\\OSGeo4W\\bin\\qgis-designer.bat"
 }

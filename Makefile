@@ -54,7 +54,7 @@ compile: $(UI_FILES) $(RESOURCE_FILES)
 %_rc.py : %.qrc
 	pyrcc5 -o $*_rc.py  $<
 
-%.py : %.uiS
+%.py : %.ui
 	pyuic5  --import-from=. -o $@ $<
 
 run: deploy
